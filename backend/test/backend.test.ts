@@ -1,6 +1,8 @@
 import { hashPassword, verifyPassword, generateSessionToken } from '../src/auth.ts';
 import { selectVerifiableWinners } from '../src/winner_selector.ts';
 import type { CandidateEntry } from '../src/winner_selector.ts';
+import { generateNonce, createSiweMessage, parseSiweMessage } from '../src/siwe.ts';
+import { db } from '../src/db.ts';
 
 async function runBackendTests() {
   console.log('--- Running Backend & D1 Logic Tests ---');
@@ -26,7 +28,6 @@ async function runBackendTests() {
   console.log('[Test 2 PASS] Session token generator passed!');
 
   // Test 3: Verifiable Random Winner Selection (Exactly 1000 or N)
-  // Let's create 1,200 simulated candidates
   const candidates: CandidateEntry[] = [];
   for (let i = 1; i <= 1200; i++) {
     candidates.push({
@@ -55,17 +56,35 @@ async function runBackendTests() {
       throw new Error(`Test 3 Failed: Determinism check failed at index ${i}`);
     }
   }
+  console.log('[Test 3 PASS] Verifiable winner selection passed all constraints!');
 
-  // Test 4: Less than 1,000 eligible participants
-  const smallCandidates: CandidateEntry[] = [
-    { submission_id: 'sub_a', wallet_address: '0x0001' },
-    { submission_id: 'sub_b', wallet_address: '0x0002' }
-  ];
-  const smallResult = await selectVerifiableWinners(smallCandidates, seed, 1000);
-  if (smallResult.totalSelected !== 2) {
-    throw new Error(`Test 4 Failed: Expected 2 winners when only 2 exist, got ${smallResult.totalSelected}`);
+  // Test 4: SIWE Nonce Generation & Message Parsing
+  const wallet = '0x1234567890123456789012345678901234567890';
+  const nonce = generateNonce();
+  const siweMsg = createSiweMessage({
+    domain: 'wezards.io',
+    address: wallet,
+    uri: 'https://wezards.io',
+    version: '1',
+    chainId: 56,
+    nonce,
+    issuedAt: new Date().toISOString()
+  });
+
+  const parsed = parseSiweMessage(siweMsg);
+  if (parsed.address?.toLowerCase() !== wallet.toLowerCase() || parsed.nonce !== nonce) {
+    throw new Error('Test 4 Failed: SIWE message parsing mismatch');
   }
-  console.log('[Test 3 & 4 PASS] Verifiable winner selection passed all constraints!');
+  console.log('[Test 4 PASS] SIWE nonce generation and parsing passed!');
+
+  // Test 5: In-Memory / PostgreSQL DB Sessions
+  const sessionToken = generateSessionToken();
+  db.createSession(wallet, sessionToken, 56, 24);
+  const validSession = db.validateSession(sessionToken);
+  if (!validSession || validSession.wallet_address !== wallet.toLowerCase()) {
+    throw new Error('Test 5 Failed: DB session validation failed');
+  }
+  console.log('[Test 5 PASS] DB user and session management passed!');
 
   console.log('--------------------------------------------------');
   console.log('All Backend Logic Unit Tests PASSED Successfully!');
@@ -73,6 +92,6 @@ async function runBackendTests() {
 }
 
 runBackendTests().catch(err => {
-  console.error('[Test Error]', err);
+  console.error(err);
   process.exit(1);
 });

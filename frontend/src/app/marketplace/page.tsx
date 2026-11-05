@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { getWalletProvider } from '../../lib/web3';
+import { getWalletProvider, formatAddress } from '../../lib/web3';
 
 interface MarketListing {
   id: string;

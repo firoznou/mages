@@ -1,15 +1,36 @@
+import { createPublicClient, http, fallback, parseAbi } from 'viem';
+import { bsc } from 'viem/chains';
+
 /**
- * Web3 & Binance Wallet / Binance Agentic Wallet Integration Helpers
+ * WeZards Web3 & Contract Integration Library
+ * Supports BNB Smart Chain (BSC Testnet 97 / Mainnet 56) with Viem & Wagmi integration.
  */
 
+export const BSC_CHAIN_ID = 56;
 export const BSC_TESTNET_CHAIN_ID = 97;
-export const BSC_MAINNET_CHAIN_ID = 56;
+
+export const ASSET_BASE_URLS = {
+  IMAGES: 'https://assets.bunink.xyz/images',
+  METADATA: 'https://assets.bunink.xyz/metadata'
+};
+
+export const bscPublicClient = createPublicClient({
+  chain: bsc,
+  transport: fallback([
+    http('https://bsc-dataseed1.binance.org/'),
+    http('https://bsc-dataseed2.binance.org/'),
+    http('https://bsc.publicnode.com')
+  ])
+});
 
 export const CONTRACT_ADDRESSES = {
-  NFT: process.env.NEXT_PUBLIC_WEZARDS_NFT_ADDRESS || '0x0000000000000000000000000000000000000000',
-  TOKEN: process.env.NEXT_PUBLIC_WEZARDS_TOKEN_ADDRESS || '0x0000000000000000000000000000000000000000',
-  MARKETPLACE: process.env.NEXT_PUBLIC_WEZARDS_MARKETPLACE_ADDRESS || '0x0000000000000000000000000000000000000000',
-  REWARD_DISTRIBUTOR: process.env.NEXT_PUBLIC_WEZARDS_REWARD_DISTRIBUTOR_ADDRESS || '0x0000000000000000000000000000000000000000',
+  NFT: process.env.NEXT_PUBLIC_WEZARDS_NFT_ADDRESS || '0x5D0EAF09Cf125FeE23f0faA093E2Ac79034fe08c',
+  TOKEN: process.env.NEXT_PUBLIC_MAGES_TOKEN_ADDRESS || '0x8203186135Fc512859a5B0Fdecd0Ea05571Aa952',
+  PRESALE: process.env.NEXT_PUBLIC_WEZARDS_PRESALE_ADDRESS || '0x3333333333333333333333333333333333333333',
+  AIRDROP: process.env.NEXT_PUBLIC_WEZARDS_AIRDROP_ADDRESS || '0x4444444444444444444444444444444444444444',
+  NFT_REWARDS: process.env.NEXT_PUBLIC_WEZARDS_NFT_REWARDS_ADDRESS || '0x5555555555555555555555555555555555555555',
+  MARKETPLACE: process.env.NEXT_PUBLIC_WEZARDS_MARKETPLACE_ADDRESS || '0x6666666666666666666666666666666666666666',
+  CHAINLINK_BNB_USD: '0x0567F2323251f0Aab15c8dFb1967E4e8A7D42aeE'
 };
 
 export const WEZARDS_NFT_ABI = [
@@ -17,136 +38,238 @@ export const WEZARDS_NFT_ABI = [
   'function symbol() view returns (string)',
   'function MAX_SUPPLY() view returns (uint256)',
   'function totalMinted() view returns (uint256)',
-  'function agenticFreeMinted() view returns (uint256)',
-  'function publicPaidMinted() view returns (uint256)',
-  'function agenticFreeAllocationLimit() view returns (uint256)',
-  'function publicPaidAllocationLimit() view returns (uint256)',
+  'function freeMinted() view returns (uint256)',
+  'function paidMinted() view returns (uint256)',
+  'function teamMinted() view returns (uint256)',
+  'function FREE_ALLOCATION_LIMIT() view returns (uint256)',
+  'function PAID_ALLOCATION_LIMIT() view returns (uint256)',
+  'function TEAM_FREE_MINT_LIMIT() view returns (uint256)',
   'function mintPrice() view returns (uint256)',
   'function isRevealed() view returns (bool)',
+  'function isPaidMint(uint256) view returns (bool)',
   'function hasClaimedFreeMint(address) view returns (bool)',
-  'function mintAgenticFree(bytes32 nonce, uint256 deadline, bytes calldata signature) external',
-  'function mintPublicPaid() external payable',
+  'function paidMintsPerWallet(address) view returns (uint256)',
+  'function mintAgenticFree(bytes calldata signature, bytes32 nonce, uint256 deadline) external',
+  'function mintPaid(uint256 quantity) external payable',
   'function tokenURI(uint256 tokenId) view returns (string)',
   'function ownerOf(uint256 tokenId) view returns (address)',
   'function balanceOf(address owner) view returns (uint256)'
 ];
 
-export const WEZARDS_TOKEN_ABI = [
+export const MAGES_TOKEN_ABI = [
   'function name() view returns (string)',
   'function symbol() view returns (string)',
   'function decimals() view returns (uint8)',
   'function totalSupply() view returns (uint256)',
+  'function TOTAL_SUPPLY_CAP() view returns (uint256)',
+  'function PRESALE_ALLOCATION() view returns (uint256)',
+  'function AIRDROP_ALLOCATION() view returns (uint256)',
+  'function TEAM_ALLOCATION() view returns (uint256)',
+  'function TREASURY_ALLOCATION() view returns (uint256)',
   'function balanceOf(address account) view returns (uint256)',
   'function transfer(address to, uint256 amount) returns (bool)',
   'function allowance(address owner, address spender) view returns (uint256)',
-  'function approve(address spender, uint256 amount) returns (bool)',
-  'function transferFrom(address from, address to, uint256 amount) returns (bool)'
+  'function approve(address spender, uint256 amount) returns (bool)'
 ];
 
-export const WEZARDS_MARKETPLACE_ABI = [
-  'function listItem(address nftContract, uint256 tokenId, uint256 price) returns (bytes32)',
-  'function buyItem(bytes32 listingId) payable',
-  'function delistItem(bytes32 listingId)',
-  'function updateListingPrice(bytes32 listingId, uint256 newPrice)',
-  'function feeBps() view returns (uint256)',
-  'function listings(bytes32) view returns (address seller, address nftContract, uint256 tokenId, uint256 price, bool isActive)'
+export const WEZARDS_PRESALE_ABI = [
+  'function isPresaleActive() view returns (bool)',
+  'function isPresaleFinalized() view returns (bool)',
+  'function claimsEnabled() view returns (bool)',
+  'function isNFTSelloutReached() view returns (bool)',
+  'function getLatestBNBPriceUSD() view returns (uint256)',
+  'function TARGET_RAISE_USD() view returns (uint256)',
+  'function MIN_PURCHASE_USD() view returns (uint256)',
+  'function MAX_WALLET_CONTRIBUTION_BNB() view returns (uint256)',
+  'function totalRaisedBNB() view returns (uint256)',
+  'function totalRaisedUSD() view returns (uint256)',
+  'function totalAcceptedBNB() view returns (uint256)',
+  'function totalRefundLiabilities() view returns (uint256)',
+  'function binanceDepositAddress() view returns (address)',
+  'function contributions(address) view returns (uint256 amountBNB, uint256 amountUSD, uint256 tokensAllocated, uint256 refundBNB, bool tokensClaimed, bool refundClaimed)',
+  'function contribute() payable',
+  'function claimTokens() external',
+  'function claimRefund() external'
 ];
 
-export const WEZARDS_REWARD_DISTRIBUTOR_ABI = [
-  'function isCampaignFinalized() view returns (bool)',
-  'function rewardAmountPerWinner() view returns (uint256)',
-  'function isWinner(address) view returns (bool)',
-  'function hasReceivedPayment(address) view returns (bool)',
-  'function claimReward() external'
+export const WEZARDS_AIRDROP_ABI = [
+  'function isAirdropActive() view returns (bool)',
+  'function merkleRoot() view returns (bytes32)',
+  'function tgeTimestamp() view returns (uint256)',
+  'function getVestingUnlockTimestamp() view returns (uint256)',
+  'function hasClaimedTGE(address) view returns (bool)',
+  'function hasClaimedVested(address) view returns (bool)',
+  'function claimTGE(uint256 totalEntitledAmount, bytes32[] calldata proof) external',
+  'function claimVested(uint256 totalEntitledAmount, bytes32[] calldata proof) external'
 ];
 
-/**
- * Detects Binance Wallet, Binance Agentic Wallet, or standard injected provider
- */
+export const WEZARDS_NFT_REWARDS_ABI = [
+  'function isCampaignActive() view returns (bool)',
+  'function MIN_REWARD() view returns (uint256)',
+  'function MAX_REWARD() view returns (uint256)',
+  'function MAX_ELIGIBLE_NFTS() view returns (uint256)',
+  'function MAX_FREE_REWARD_CLAIMS() view returns (uint256)',
+  'function totalFreeRewardsClaimed() view returns (uint256)',
+  'function totalFreeMagesDistributed() view returns (uint256)',
+  'function isRewardClaimed(uint256) view returns (bool)',
+  'function tokenRewardAmount(uint256) view returns (uint256)',
+  'function calculateTokenReward(uint256 tokenId) view returns (uint256)',
+  'function claimReward(uint256 tokenId) external',
+  'function batchClaimRewards(uint256[] calldata tokenIds) external',
+  'function isPaidClaimPhaseActive() view returns (bool)',
+  'function PAID_PURCHASE_PRICE() view returns (uint256)',
+  'function MAGES_PER_PAID_PURCHASE() view returns (uint256)',
+  'function MAX_PAID_PURCHASES() view returns (uint256)',
+  'function MAX_PAID_DISTRIBUTION() view returns (uint256)',
+  'function totalPaidPurchases() view returns (uint256)',
+  'function totalPaidMagesDistributed() view returns (uint256)',
+  'function purchasePaidMAGES(uint256 quantity) external payable'
+];
+
+export interface WalletState {
+  address: string | null;
+  chainId: number | null;
+  isConnected: boolean;
+  isAgenticWallet: boolean;
+  walletName: string | null;
+  balanceBNB: string;
+}
+
+export function formatAddress(address: string | null): string {
+  if (!address) return '';
+  return `${address.slice(0, 6)}...${address.slice(-4)}`;
+}
+
+export function formatBNB(wei: bigint | string | number): string {
+  const num = typeof wei === 'bigint' ? Number(wei) / 1e18 : Number(wei);
+  return num.toLocaleString(undefined, { minimumFractionDigits: 3, maximumFractionDigits: 4 });
+}
+
+export function formatMAGES(wei: bigint | string | number): string {
+  const num = typeof wei === 'bigint' ? Number(wei) / 1e18 : Number(wei);
+  return num.toLocaleString(undefined, { maximumFractionDigits: 0 });
+}
+
 export function getWalletProvider(): any {
   if (typeof window === 'undefined') return null;
-  const anyWindow = window as any;
-
-  // Binance Chain Wallet or Binance Agentic Wallet provider
-  if (anyWindow.BinanceChain) {
-    return anyWindow.BinanceChain;
-  }
-  if (anyWindow.ethereum?.isBinance || anyWindow.ethereum?.isBinanceAgentic) {
-    return anyWindow.ethereum;
-  }
-  if (anyWindow.ethereum) {
-    return anyWindow.ethereum;
-  }
-  return null;
+  return (window as any).BinanceChain || (window as any).ethereum || null;
 }
 
-/**
- * Connects wallet and verifies BSC Network
- */
-export async function connectBinanceWallet(): Promise<{
-  address: string;
-  chainId: number;
-  isAgentic: boolean;
-}> {
-  const provider = getWalletProvider();
-  if (!provider) {
-    throw new Error('No Binance Wallet or Web3 provider detected. Please install Binance Wallet or Binance Agentic Wallet extension.');
-  }
-
-  const accounts = await provider.request({ method: 'eth_requestAccounts' });
-  if (!accounts || accounts.length === 0) {
-    throw new Error('Wallet connection rejected or no account selected.');
-  }
-
-  const chainIdHex = await provider.request({ method: 'eth_chainId' });
-  const chainId = parseInt(chainIdHex, 16);
-
-  // Check if provider has Binance Agentic flags
-  const isAgentic = !!(
-    provider.isBinanceAgentic ||
-    provider.isAgentic ||
-    (provider.flags && provider.flags.isAgentic)
-  );
-
-  return {
-    address: accounts[0],
-    chainId,
-    isAgentic
-  };
-}
-
-/**
- * Switches network to BNB Smart Chain Testnet (97) or Mainnet (56)
- */
-export async function switchToBSC(targetChainId: number = BSC_TESTNET_CHAIN_ID): Promise<void> {
-  const provider = getWalletProvider();
-  if (!provider) return;
-
-  const hexChainId = `0x${targetChainId.toString(16)}`;
-
+export async function fetchOnChainMintStats() {
   try {
-    await provider.request({
-      method: 'wallet_switchEthereumChain',
-      params: [{ chainId: hexChainId }]
-    });
-  } catch (switchError: any) {
-    // Chain has not been added to wallet
-    if (switchError.code === 4902) {
-      const isTestnet = targetChainId === BSC_TESTNET_CHAIN_ID;
-      await provider.request({
-        method: 'wallet_addEthereumChain',
-        params: [
-          {
-            chainId: hexChainId,
-            chainName: isTestnet ? 'BNB Smart Chain Testnet' : 'BNB Smart Chain Mainnet',
-            nativeCurrency: { name: 'tBNB', symbol: isTestnet ? 'tBNB' : 'BNB', decimals: 18 },
-            rpcUrls: [isTestnet ? 'https://data-seed-prebsc-1-s1.binance.org:8545/' : 'https://bsc-dataseed.binance.org/'],
-            blockExplorerUrls: [isTestnet ? 'https://testnet.bscscan.com' : 'https://bscscan.com']
-          }
-        ]
-      });
-    } else {
-      throw switchError;
+    const abi = parseAbi([
+      'function freeMinted() view returns (uint256)',
+      'function paidMinted() view returns (uint256)'
+    ]);
+    const [free, paid, block] = await Promise.all([
+      bscPublicClient.readContract({
+        address: CONTRACT_ADDRESSES.NFT as `0x${string}`,
+        abi,
+        functionName: 'freeMinted'
+      }).catch(() => BigInt(0)),
+      bscPublicClient.readContract({
+        address: CONTRACT_ADDRESSES.NFT as `0x${string}`,
+        abi,
+        functionName: 'paidMinted'
+      }).catch(() => BigInt(0)),
+      bscPublicClient.getBlockNumber().catch(() => BigInt(131857855))
+    ]);
+
+    const freeNum = Number(free);
+    const paidNum = Number(paid);
+    const total = freeNum + paidNum;
+
+    return {
+      freeMinted: freeNum,
+      paidMinted: paidNum,
+      totalMinted: total,
+      remaining: Math.max(0, 5000 - total),
+      blockNumber: Number(block)
+    };
+  } catch (err) {
+    return {
+      freeMinted: 0,
+      paidMinted: 0,
+      totalMinted: 0,
+      remaining: 5000,
+      blockNumber: 131857855
+    };
+  }
+}
+
+export async function fetchWalletMagesTokenBalance(address: string): Promise<string> {
+  try {
+    if (!address || !address.startsWith('0x')) return '0';
+    const abi = parseAbi([
+      'function balanceOf(address) view returns (uint256)',
+      'function decimals() view returns (uint8)'
+    ]);
+    const [bal, dec] = await Promise.all([
+      bscPublicClient.readContract({
+        address: CONTRACT_ADDRESSES.TOKEN as `0x${string}`,
+        abi,
+        functionName: 'balanceOf',
+        args: [address as `0x${string}`]
+      }),
+      bscPublicClient.readContract({
+        address: CONTRACT_ADDRESSES.TOKEN as `0x${string}`,
+        abi,
+        functionName: 'decimals'
+      }).catch(() => 18)
+    ]);
+    const divisor = BigInt(10 ** Number(dec));
+    const whole = bal / divisor;
+    return whole.toString();
+  } catch (err) {
+    return '0';
+  }
+}
+
+export async function fetchMintedNFTList(): Promise<any[]> {
+  try {
+    const stats = await fetchOnChainMintStats();
+    if (stats.totalMinted === 0) {
+      return [];
     }
+
+    const abi = parseAbi([
+      'function ownerOf(uint256) view returns (address)'
+    ]);
+
+    const items = [];
+    const count = Math.min(stats.totalMinted, 100);
+    for (let id = 1; id <= count; id++) {
+      try {
+        const owner = await bscPublicClient.readContract({
+          address: CONTRACT_ADDRESSES.NFT as `0x${string}`,
+          abi,
+          functionName: 'ownerOf',
+          args: [BigInt(id)]
+        }).catch(() => null);
+
+        let meta = null;
+        try {
+          const res = await fetch(`${ASSET_BASE_URLS.METADATA}/${id}.json`);
+          if (res.ok) meta = await res.json();
+        } catch {}
+
+        items.push({
+          token_id: id,
+          name: meta?.name || `WeZards #${String(id).padStart(4, '0')}`,
+          owner_address: owner || '0x0000000000000000000000000000000000000000',
+          image_url: `${ASSET_BASE_URLS.IMAGES}/${id}.png`,
+          rarity_tier: meta?.rarity_tier || 'Common',
+          rarity_score: meta?.rarity_score || 50,
+          rarity_rank: meta?.rarity_rank || id,
+          attributes: meta?.attributes || []
+        });
+      } catch (err) {
+        console.error(`Error loading NFT #${id}:`, err);
+      }
+    }
+    return items;
+  } catch (err) {
+    console.error('Failed to load minted NFT list:', err);
+    return [];
   }
 }

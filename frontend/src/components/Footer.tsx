@@ -1,60 +1,103 @@
+'use client';
+
 import React from 'react';
 import Link from 'next/link';
+import { CONTRACT_ADDRESSES } from '../lib/web3';
 
 export default function Footer() {
   return (
-    <footer className="border-t border-mage-border bg-mage-dark text-gray-400 py-12">
+    <footer className="bg-[#06030D] border-t border-[#2E1B4E]/80 text-[#9CA3AF] pt-16 pb-12">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-10 mb-12">
           
-          {/* Brand Col */}
-          <div className="space-y-4 md:col-span-2">
-            <div className="flex items-center gap-3">
-              <span className="text-2xl">🧙‍♂️</span>
-              <span className="font-extrabold text-2xl bg-gradient-to-r from-amber-300 to-purple-400 bg-clip-text text-transparent">
-                WeZards
-              </span>
-            </div>
-            <p className="text-sm text-gray-400 max-w-sm">
-              The premier magical fantasy Web3 ecosystem on BNB Smart Chain. 5,000 unique Mages NFTs, 21,000,000 $WEZ governance tokens, decentralized marketplace, and community reward campaigns.
+          {/* Brand Info */}
+          <div className="lg:col-span-2">
+            <Link href="/" className="flex items-center gap-3 mb-4">
+              <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-[#7928CA] to-[#F59E0B] p-[2px]">
+                <div className="w-full h-full bg-[#090514] rounded-[10px] flex items-center justify-center">
+                  <span className="text-lg font-black text-[#F59E0B]">W</span>
+                </div>
+              </div>
+              <span className="text-2xl font-extrabold text-white tracking-wider">WeZards</span>
+            </Link>
+            <p className="text-sm text-[#9CA3AF] max-w-sm mb-6 leading-relaxed">
+              The premier fantasy wizard Web3 ecosystem on BNB Smart Chain. 5,000 retro 8-bit collectible NFTs, fixed-cap MAGES tokenomics, and decentralized presale protocols.
             </p>
-            <div className="flex items-center gap-4 text-xs font-semibold text-purple-300">
-              <span className="px-2.5 py-1 rounded-md bg-mage-purple/20 border border-mage-purple/40">
-                BNB Chain Mainnet / Testnet
-              </span>
-              <span className="px-2.5 py-1 rounded-md bg-amber-500/20 border border-amber-500/40 text-amber-300">
-                Audited Smart Contracts
+            <div className="flex items-center gap-3">
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-[#160D27] border border-[#2E1B4E] text-amber-400">
+                <span className="w-2 h-2 rounded-full bg-emerald-400"></span>
+                BNB Smart Chain (ChainID: 56)
               </span>
             </div>
           </div>
 
           {/* Quick Links */}
           <div>
-            <h4 className="text-white font-semibold text-sm mb-3 uppercase tracking-wider">Ecosystem</h4>
-            <ul className="space-y-2 text-sm">
-              <li><Link href="/mint" className="hover:text-amber-300 transition-colors">Mint Portal</Link></li>
-              <li><Link href="/explore" className="hover:text-amber-300 transition-colors">Explore Mages</Link></li>
-              <li><Link href="/marketplace" className="hover:text-amber-300 transition-colors">NFT Marketplace</Link></li>
-              <li><Link href="/rewards" className="hover:text-amber-300 transition-colors">Reward Campaign</Link></li>
-              <li><Link href="/tokenomics" className="hover:text-amber-300 transition-colors">$WEZ Tokenomics</Link></li>
+            <h4 className="text-white text-sm font-bold uppercase tracking-wider mb-4">Ecosystem</h4>
+            <ul className="space-y-2.5 text-sm">
+              <li><Link href="/collection" className="hover:text-white transition">NFT Collection</Link></li>
+              <li><Link href="/mint" className="hover:text-white transition">Minting Portal</Link></li>
+              <li><Link href="/presale" className="hover:text-white transition">MAGES Presale</Link></li>
+              <li><Link href="/tokenomics" className="hover:text-white transition">MAGES Tokenomics</Link></li>
+              <li><Link href="/airdrop" className="hover:text-white transition">Holder Airdrop</Link></li>
+              <li><Link href="/rewards" className="hover:text-white transition">Random Rewards</Link></li>
             </ul>
           </div>
 
-          {/* Security & Docs */}
-          <div>
-            <h4 className="text-white font-semibold text-sm mb-3 uppercase tracking-wider">Resources</h4>
-            <ul className="space-y-2 text-sm">
-              <li><Link href="/about" className="hover:text-amber-300 transition-colors">About WeZards</Link></li>
-              <li><Link href="/roadmap" className="hover:text-amber-300 transition-colors">Lore & Roadmap</Link></li>
-              <li><a href="https://testnet.bscscan.com" target="_blank" rel="noreferrer" className="hover:text-amber-300 transition-colors">BscScan Explorer ↗</a></li>
-              <li><a href="https://ipfs.tech" target="_blank" rel="noreferrer" className="hover:text-amber-300 transition-colors">IPFS Storage ↗</a></li>
-            </ul>
+          {/* Contract Addresses */}
+          <div className="lg:col-span-2">
+            <h4 className="text-white text-sm font-bold uppercase tracking-wider mb-4">Verified Smart Contracts</h4>
+            <div className="space-y-2 text-xs font-mono">
+              <div className="p-2.5 rounded-lg bg-[#0E071A] border border-[#2E1B4E]/60">
+                <div className="text-gray-400 flex justify-between">
+                  <span>WeZards NFT (ERC-721):</span>
+                  <span className="text-emerald-400">5,000 Cap</span>
+                </div>
+                <a
+                  href={`https://bscscan.com/address/${CONTRACT_ADDRESSES.NFT}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-white hover:text-emerald-400 truncate block transition"
+                  title="View WeZards NFT on BscScan"
+                >
+                  {CONTRACT_ADDRESSES.NFT}
+                </a>
+              </div>
+              <div className="p-2.5 rounded-lg bg-[#0E071A] border border-[#2E1B4E]/60">
+                <div className="text-gray-400 flex justify-between">
+                  <span>MAGES Token (ERC-20):</span>
+                  <span className="text-amber-400">21,000,000 Cap</span>
+                </div>
+                <a
+                  href={`https://bscscan.com/token/${CONTRACT_ADDRESSES.TOKEN}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-white hover:text-[#F59E0B] truncate block transition"
+                  title="View MAGES Token on BscScan"
+                >
+                  {CONTRACT_ADDRESSES.TOKEN}
+                </a>
+              </div>
+              <div className="p-2.5 rounded-lg bg-[#0E071A] border border-[#2E1B4E]/60">
+                <div className="text-gray-400 flex justify-between">
+                  <span>MAGES Presale Contract:</span>
+                  <span className="text-purple-400">$20k Target</span>
+                </div>
+                <div className="text-white truncate">{CONTRACT_ADDRESSES.PRESALE}</div>
+              </div>
+            </div>
           </div>
+
         </div>
 
-        <div className="border-t border-mage-border/60 pt-8 flex flex-col sm:flex-row items-center justify-between text-xs text-gray-500">
-          <p>© {new Date().getFullYear()} WeZards Ecosystem. All rights reserved.</p>
-          <p className="mt-4 sm:mt-0">Built for the BNB Smart Chain Community.</p>
+        {/* Bottom Bar */}
+        <div className="pt-8 border-t border-[#2E1B4E]/60 flex flex-col md:flex-row items-center justify-between text-xs text-gray-500 gap-4">
+          <p>© {new Date().getFullYear()} WeZards Core Architecture. All smart contracts audited and open-source.</p>
+          <div className="flex gap-6">
+            <span className="hover:text-gray-400 transition cursor-pointer">Security Policy</span>
+            <span className="hover:text-gray-400 transition cursor-pointer">Terms of Service</span>
+            <span className="hover:text-gray-400 transition cursor-pointer">BscScan Verified</span>
+          </div>
         </div>
       </div>
     </footer>

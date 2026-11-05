@@ -17,8 +17,14 @@ body {
 }
 
 /* Custom magical scrollbar */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #2E1B4E #080314;
+}
+
 ::-webkit-scrollbar {
   width: 8px;
+  height: 8px;
 }
 ::-webkit-scrollbar-track {
   background: #080314;
@@ -29,6 +35,9 @@ body {
 }
 ::-webkit-scrollbar-thumb:hover {
   background: #7928CA;
+}
+::-webkit-scrollbar-corner {
+  background: #080314;
 }
 
 .arcane-border {

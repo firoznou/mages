@@ -1,2 +1,13 @@
+# Sensitive and protected folders
 /generator
 /contracts
+/uploader
+
+# Build artifacts & dependencies
+frontend/.next/
+node_modules/
+package-lock.json
+*.log
+.env.local
+.DS_Store
+

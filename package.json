@@ -10,6 +10,10 @@
     "admin"
   ],
   "scripts": {
+    "dev": "npm --prefix frontend run dev",
+    "build": "npm --prefix frontend run build",
+    "start": "npm --prefix frontend run start",
+    "server": "node --experimental-strip-types backend/src/server.ts",
     "contracts:build": "forge build --root contracts",
     "contracts:test": "forge test --root contracts -vvv",
     "generate:nfts": "npm --prefix generator run generate",

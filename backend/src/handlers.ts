@@ -3,7 +3,10 @@ import { selectVerifiableWinners } from './winner_selector.ts';
 import type { CandidateEntry } from './winner_selector.ts';
 
 export interface Env {
-  DB: any;
+  DB?: any;
+  'datasets-wezards'?: any;
+  datasets_wezards?: any;
+  DATASETS_WEZARDS?: any;
   ENVIRONMENT: string;
   CHAIN_ID: number;
   MAX_WINNERS_TARGET: number;
@@ -12,6 +15,10 @@ export interface Env {
   ADMIN_INITIAL_PASSWORD?: string;
   ADMIN_JWT_SECRET?: string;
   BINANCE_AGENTIC_VERIFIER_PRIVATE_KEY?: string;
+}
+
+export function getDB(env: Env): any {
+  return env['datasets-wezards'] || env.DB || env.datasets_wezards || env.DATASETS_WEZARDS;
 }
 
 export function jsonResponse(data: any, status = 200, headers: Record<string, string> = {}): Response {
@@ -38,7 +45,8 @@ export function errorResponse(message: string, status = 400): Response {
 
 export async function handleGetStats(env: Env): Promise<Response> {
   try {
-    const mintsQuery = await env.DB.prepare(`
+    const db = getDB(env);
+    const mintsQuery = await db.prepare(`
       SELECT 
         COUNT(*) as total_minted,
         SUM(CASE WHEN mint_type = 'AGENTIC_FREE' THEN 1 ELSE 0 END) as free_minted,
@@ -46,7 +54,7 @@ export async function handleGetStats(env: Env): Promise<Response> {
       FROM mint_transactions WHERE status = 'CONFIRMED'
     `).first();
 
-    const submissionsQuery = await env.DB.prepare(`
+    const submissionsQuery = await db.prepare(`
       SELECT 
         COUNT(*) as total_submissions,
         SUM(CASE WHEN status = 'APPROVED' THEN 1 ELSE 0 END) as approved_submissions,
@@ -224,6 +232,80 @@ export async function handleAgenticVerify(request: Request, env: Env): Promise<R
     });
   } catch (err: any) {
     return errorResponse(`Agentic verification failed: ${err.message}`, 500);
+  }
+}
+
+export async function handleGiftSubmit(request: Request, env: Env): Promise<Response> {
+  const db = getDB(env);
+  if (!db) {
+    return errorResponse('Cloudflare D1 database is not bound', 500);
+  }
+  try {
+    const body = await request.json() as any;
+    const { walletAddress, twitterUsername, twitterPostUrl, holdingTokensBalance, screenshotData, screenshotUrl } = body;
+
+    if (!walletAddress || !/^0x[a-fA-F0-9]{40}$/.test(walletAddress)) {
+      return errorResponse('Valid BNB Smart Chain wallet address is required');
+    }
+    if (!twitterPostUrl || !/^https?:\/\/(twitter\.com|x\.com)\/[A-Za-z0-9_]+\/status\/\d+/.test(twitterPostUrl)) {
+      return errorResponse('Valid X/Twitter status URL is required');
+    }
+
+    const cleanWallet = walletAddress.toLowerCase();
+    const cleanUsername = (twitterUsername || '').replace(/^@/, '');
+
+    // Check duplicate submission
+    const existing = await db.prepare(
+      'SELECT id FROM minting_gift_claims WHERE wallet_address = ? OR twitter_post_url = ?'
+    ).bind(cleanWallet, twitterPostUrl).first();
+
+    if (existing) {
+      return errorResponse('A minting gift claim already exists for this wallet or post URL', 409);
+    }
+
+    const claimId = `gift_${crypto.randomUUID()}`;
+
+    await db.prepare(`
+      INSERT INTO minting_gift_claims (
+        id, wallet_address, twitter_username, twitter_post_url,
+        holding_tokens_balance, screenshot_data, screenshot_url, status
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, 'PENDING')
+    `).bind(
+      claimId, cleanWallet, cleanUsername, twitterPostUrl,
+      holdingTokensBalance || '0', screenshotData || null, screenshotUrl || null
+    ).run();
+
+    return jsonResponse({
+      success: true,
+      message: 'Minting gift claim saved to Cloudflare D1 successfully.',
+      claimId,
+      walletAddress: cleanWallet,
+      status: 'PENDING'
+    }, 201);
+  } catch (err: any) {
+    return errorResponse(`Failed to submit gift claim: ${err.message}`, 500);
+  }
+}
+
+export async function handleGetGifts(request: Request, env: Env): Promise<Response> {
+  const db = getDB(env);
+  if (!db) return jsonResponse({ success: true, claims: [] });
+  try {
+    const url = new URL(request.url);
+    const wallet = url.searchParams.get('wallet')?.toLowerCase();
+    let query = 'SELECT id, wallet_address, twitter_username, twitter_post_url, holding_tokens_balance, status, created_at FROM minting_gift_claims';
+    let stmt;
+    if (wallet) {
+      query += ' WHERE wallet_address = ? ORDER BY created_at DESC LIMIT 10';
+      stmt = db.prepare(query).bind(wallet);
+    } else {
+      query += ' ORDER BY created_at DESC LIMIT 20';
+      stmt = db.prepare(query);
+    }
+    const { results } = await stmt.all();
+    return jsonResponse({ success: true, claims: results });
+  } catch (err: any) {
+    return jsonResponse({ success: true, claims: [] });
   }
 }
 

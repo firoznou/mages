@@ -4,9 +4,9 @@ import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 
 export const metadata: Metadata = {
-  title: 'WeZards - Magical Mages Web3 Ecosystem | BNB Chain',
-  description: 'Production-ready Web3 ecosystem on BNB Smart Chain. 5,000 unique Mages NFTs, $WEZ token, decentralized marketplace, and $1,000 BNB reward campaign.',
-  keywords: ['WeZards', 'BNB Chain', 'NFT', 'Web3', 'Binance Agentic Wallet', 'Solidity', 'Crypto'],
+  title: 'WeZards - Magical Web3 Ecosystem | 5,000 NFTs & MAGES Token on BSC',
+  description: 'Production-ready Web3 ecosystem on BNB Smart Chain. 5,000 unique 8-bit wizard NFTs, 21M fixed MAGES tokenomics, pro-rata presale, and verifiable random rewards.',
+  keywords: ['WeZards', 'BNB Chain', 'NFT', 'MAGES Token', 'Web3', 'Binance Agentic Wallet', 'Solidity', 'Crypto'],
 };
 
 export default function RootLayout({

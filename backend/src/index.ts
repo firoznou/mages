@@ -7,6 +7,8 @@ import {
   handleGetNFTById,
   handleCampaignSubmit,
   handleAgenticVerify,
+  handleGiftSubmit,
+  handleGetGifts,
   handleAdminLogin,
   handleAdminSubmissions,
   handleAdminReviewSubmission,
@@ -55,6 +57,14 @@ export default {
 
       if (method === 'POST' && url.pathname === '/api/agentic/verify') {
         return await handleAgenticVerify(request, env);
+      }
+
+      if (method === 'POST' && url.pathname === '/api/gift/submit') {
+        return await handleGiftSubmit(request, env);
+      }
+
+      if (method === 'GET' && url.pathname === '/api/gift/claims') {
+        return await handleGetGifts(request, env);
       }
 
       // 2. ADMIN AUTH ROUTES

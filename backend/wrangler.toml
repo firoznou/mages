@@ -9,7 +9,7 @@ MAX_WINNERS_TARGET = 1000
 BNB_PRICE_USD_SNAPSHOT = 550.0
 
 [[d1_databases]]
-binding = "DB"
-database_name = "wezards_db"
-database_id = "00000000-0000-0000-0000-000000000000" # Local and mock fallback
+binding = "datasets-wezards"
+database_name = "wezards"
+database_id = "00000000-0000-0000-0000-000000000000"
 migrations_dir = "migrations"
