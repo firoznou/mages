@@ -16,6 +16,7 @@ import {
   handleGetWinners,
   handleRecordPayment
 } from './handlers.ts';
+import { renderPortalFallback } from './portal_fallback.ts';
 
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
@@ -34,6 +35,39 @@ export default {
           'Access-Control-Max-Age': '86400'
         }
       });
+    }
+
+    // 0. FRONTEND ROUTING & STATIC ASSETS (Non-API Routes)
+    if (!url.pathname.startsWith('/api')) {
+      if ((env as any).ASSETS) {
+        // First try the requested path directly
+        let assetRes = await (env as any).ASSETS.fetch(request);
+        if (assetRes.status !== 404) {
+          return assetRes;
+        }
+
+        // Try clean URLs (e.g. /mint -> /mint.html, /collection -> /collection.html)
+        if (!url.pathname.includes('.')) {
+          const cleanUrl = new URL(request.url);
+          const trimmed = cleanUrl.pathname.replace(/\/$/, '');
+          cleanUrl.pathname = `${trimmed}.html`;
+          assetRes = await (env as any).ASSETS.fetch(new Request(cleanUrl.toString(), request));
+          if (assetRes.status !== 404) {
+            return assetRes;
+          }
+        }
+
+        // Single Page App fallback
+        const fallbackUrl = new URL(request.url);
+        fallbackUrl.pathname = '/index.html';
+        const spaRes = await (env as any).ASSETS.fetch(new Request(fallbackUrl.toString(), request));
+        if (spaRes.status !== 404) {
+          return spaRes;
+        }
+      }
+
+      // If ASSETS binding is missing or route is unmatched, serve high-fidelity portal
+      return renderPortalFallback(url.pathname);
     }
 
     try {

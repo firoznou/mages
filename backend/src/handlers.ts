@@ -109,6 +109,11 @@ export async function handleGetNFTs(request: Request, env: Env): Promise<Respons
   const offset = (page - 1) * limit;
 
   try {
+    const db = getDB(env);
+    if (!db) {
+      return jsonResponse({ success: true, page, limit, total: 0, nfts: [] });
+    }
+
     let query = 'SELECT * FROM nfts WHERE 1=1';
     const params: any[] = [];
 
@@ -120,8 +125,8 @@ export async function handleGetNFTs(request: Request, env: Env): Promise<Respons
     query += ' ORDER BY rarity_rank ASC LIMIT ? OFFSET ?';
     params.push(limit, offset);
 
-    const { results } = await env.DB.prepare(query).bind(...params).all();
-    const countResult = await env.DB.prepare('SELECT COUNT(*) as total FROM nfts').first();
+    const { results } = await db.prepare(query).bind(...params).all();
+    const countResult = await db.prepare('SELECT COUNT(*) as total FROM nfts').first();
 
     return jsonResponse({
       success: true,
@@ -137,10 +142,13 @@ export async function handleGetNFTs(request: Request, env: Env): Promise<Respons
 
 export async function handleGetNFTById(tokenId: string, env: Env): Promise<Response> {
   try {
-    const nft = await env.DB.prepare('SELECT * FROM nfts WHERE token_id = ?').bind(tokenId).first();
+    const db = getDB(env);
+    if (!db) return errorResponse('Database not connected', 500);
+
+    const nft = await db.prepare('SELECT * FROM nfts WHERE token_id = ?').bind(tokenId).first();
     if (!nft) return errorResponse('NFT not found', 404);
 
-    const { results: metadata } = await env.DB.prepare(
+    const { results: metadata } = await db.prepare(
       'SELECT trait_type, trait_value FROM nft_metadata WHERE token_id = ?'
     ).bind(tokenId).all();
 
@@ -174,8 +182,11 @@ export async function handleCampaignSubmit(request: Request, env: Env): Promise<
     const cleanUsername = twitterUsername.replace(/^@/, '');
     const cleanWallet = walletAddress.toLowerCase();
 
+    const db = getDB(env);
+    if (!db) return errorResponse('Database not connected', 500);
+
     // Check duplicate wallet
-    const existing = await env.DB.prepare(
+    const existing = await db.prepare(
       'SELECT id FROM social_submissions WHERE wallet_address = ? OR twitter_post_url = ?'
     ).bind(cleanWallet, twitterPostUrl).first();
 
@@ -185,7 +196,7 @@ export async function handleCampaignSubmit(request: Request, env: Env): Promise<
 
     const submissionId = `sub_${crypto.randomUUID()}`;
 
-    await env.DB.prepare(`
+    await db.prepare(`
       INSERT INTO social_submissions (id, wallet_address, twitter_username, twitter_post_url, status)
       VALUES (?, ?, ?, ?, 'PENDING')
     `).bind(submissionId, cleanWallet, cleanUsername, twitterPostUrl).run();
@@ -216,11 +227,14 @@ export async function handleAgenticVerify(request: Request, env: Env): Promise<R
       .map(b => b.toString(16).padStart(2, '0')).join('');
     const deadline = Math.floor(Date.now() / 1000) + 3600; // 1 hour validity
 
-    // Record wallet in database
-    await env.DB.prepare(`
-      INSERT OR REPLACE INTO wallets (id, address, is_agentic_wallet, agentic_verified_at)
-      VALUES (?, ?, 1, CURRENT_TIMESTAMP)
-    `).bind(`w_${cleanWallet}`, cleanWallet).run();
+    // Record wallet in database if D1 is available
+    const db = getDB(env);
+    if (db) {
+      await db.prepare(`
+        INSERT OR REPLACE INTO wallets (id, address, is_agentic_wallet, agentic_verified_at)
+        VALUES (?, ?, 1, CURRENT_TIMESTAMP)
+      `).bind(`w_${cleanWallet}`, cleanWallet).run();
+    }
 
     return jsonResponse({
       success: true,
@@ -322,8 +336,11 @@ export async function handleAdminLogin(request: Request, env: Env): Promise<Resp
       return errorResponse('Username and password are required', 400);
     }
 
+    const db = getDB(env);
+    if (!db) return errorResponse('Database not connected', 500);
+
     // Check rate limit / user
-    let admin = await env.DB.prepare('SELECT * FROM admin_users WHERE username = ?').bind(username).first();
+    let admin = await db.prepare('SELECT * FROM admin_users WHERE username = ?').bind(username).first();
 
     // If no admin user exists yet, seed initial admin from env or secure defaults
     if (!admin) {
@@ -332,11 +349,11 @@ export async function handleAdminLogin(request: Request, env: Env): Promise<Resp
       if (username === initialUser) {
         const hashed = await hashPassword(initialPass);
         const newId = `adm_${crypto.randomUUID()}`;
-        await env.DB.prepare(`
+        await db.prepare(`
           INSERT INTO admin_users (id, username, password_hash, role)
           VALUES (?, ?, ?, 'SUPERADMIN')
         `).bind(newId, initialUser, hashed).run();
-        admin = await env.DB.prepare('SELECT * FROM admin_users WHERE username = ?').bind(username).first();
+        admin = await db.prepare('SELECT * FROM admin_users WHERE username = ?').bind(username).first();
       }
     }
 
@@ -347,7 +364,7 @@ export async function handleAdminLogin(request: Request, env: Env): Promise<Resp
     const isValid = await verifyPassword(password, admin.password_hash);
     if (!isValid) {
       // Increment failed attempts
-      await env.DB.prepare('UPDATE admin_users SET failed_attempts = failed_attempts + 1 WHERE id = ?')
+      await db.prepare('UPDATE admin_users SET failed_attempts = failed_attempts + 1 WHERE id = ?')
         .bind(admin.id).run();
       return errorResponse('Invalid credentials', 401);
     }
@@ -356,16 +373,16 @@ export async function handleAdminLogin(request: Request, env: Env): Promise<Resp
     const sessionToken = generateSessionToken();
     const expiresAt = new Date(Date.now() + 24 * 3600 * 1000).toISOString();
 
-    await env.DB.prepare(`
+    await db.prepare(`
       INSERT INTO admin_sessions (id, session_token, admin_id, expires_at)
       VALUES (?, ?, ?, ?)
     `).bind(`sess_${crypto.randomUUID()}`, sessionToken, admin.id, expiresAt).run();
 
-    await env.DB.prepare('UPDATE admin_users SET failed_attempts = 0, last_login_at = CURRENT_TIMESTAMP WHERE id = ?')
+    await db.prepare('UPDATE admin_users SET failed_attempts = 0, last_login_at = CURRENT_TIMESTAMP WHERE id = ?')
       .bind(admin.id).run();
 
     // Log admin login
-    await env.DB.prepare(`
+    await db.prepare(`
       INSERT INTO admin_activity_logs (id, admin_id, action, target_entity, details_json)
       VALUES (?, ?, 'LOGIN', 'ADMIN_SESSION', ?)
     `).bind(`log_${crypto.randomUUID()}`, admin.id, JSON.stringify({ username })).run();
@@ -403,7 +420,10 @@ export async function handleAdminSubmissions(request: Request, env: Env): Promis
     }
     query += ' ORDER BY created_at DESC LIMIT 100';
 
-    const { results } = await env.DB.prepare(query).bind(...params).all();
+    const db = getDB(env);
+    if (!db) return errorResponse('Database not connected', 500);
+
+    const { results } = await db.prepare(query).bind(...params).all();
     return jsonResponse({ success: true, submissions: results });
   } catch (err: any) {
     return errorResponse(`Failed to query submissions: ${err.message}`, 500);
@@ -419,17 +439,20 @@ export async function handleAdminReviewSubmission(id: string, request: Request, 
       return errorResponse("Status must be either 'APPROVED' or 'REJECTED'");
     }
 
-    const sub = await env.DB.prepare('SELECT * FROM social_submissions WHERE id = ?').bind(id).first();
+    const db = getDB(env);
+    if (!db) return errorResponse('Database not connected', 500);
+
+    const sub = await db.prepare('SELECT * FROM social_submissions WHERE id = ?').bind(id).first();
     if (!sub) return errorResponse('Submission not found', 404);
 
-    await env.DB.prepare(`
+    await db.prepare(`
       UPDATE social_submissions
       SET status = ?, review_notes = ?, reviewed_by = ?, reviewed_at = CURRENT_TIMESTAMP
       WHERE id = ?
     `).bind(status, reviewNotes || null, adminId || 'admin', id).run();
 
     if (status === 'APPROVED') {
-      await env.DB.prepare(`
+      await db.prepare(`
         INSERT OR IGNORE INTO reward_entries (id, submission_id, wallet_address)
         VALUES (?, ?, ?)
       `).bind(`entry_${crypto.randomUUID()}`, id, sub.wallet_address).run();
@@ -446,8 +469,11 @@ export async function handleSelectWinners(request: Request, env: Env): Promise<R
     const body = await request.json() as any;
     const providedSeed = body.verifiableSeed || ('0x' + crypto.randomUUID().replace(/-/g, '') + crypto.randomUUID().replace(/-/g, ''));
 
+    const db = getDB(env);
+    if (!db) return errorResponse('Database not connected', 500);
+
     // Fetch all approved entries
-    const { results } = await env.DB.prepare(`
+    const { results } = await db.prepare(`
       SELECT s.id as submission_id, s.wallet_address
       FROM social_submissions s
       JOIN reward_entries e ON s.id = e.submission_id
@@ -465,12 +491,12 @@ export async function handleSelectWinners(request: Request, env: Env): Promise<R
     // Save winners transactionally
     for (const winner of selection.winners) {
       const winnerId = `win_${crypto.randomUUID()}`;
-      await env.DB.prepare(`
+      await db.prepare(`
         INSERT OR REPLACE INTO reward_winners (id, wallet_address, submission_id, selection_rank, verifiable_seed)
         VALUES (?, ?, ?, ?, ?)
       `).bind(winnerId, winner.wallet_address, winner.submission_id, winner.rank, selection.seed).run();
 
-      await env.DB.prepare("UPDATE social_submissions SET status = 'WINNER' WHERE id = ?")
+      await db.prepare("UPDATE social_submissions SET status = 'WINNER' WHERE id = ?")
         .bind(winner.submission_id).run();
     }
 
@@ -489,7 +515,10 @@ export async function handleSelectWinners(request: Request, env: Env): Promise<R
 
 export async function handleGetWinners(env: Env): Promise<Response> {
   try {
-    const { results } = await env.DB.prepare(`
+    const db = getDB(env);
+    if (!db) return errorResponse('Database not connected', 500);
+
+    const { results } = await db.prepare(`
       SELECT w.id, w.wallet_address, w.selection_rank, w.verifiable_seed, w.selected_at,
              s.twitter_username, p.status as payment_status, p.tx_hash
       FROM reward_winners w
@@ -513,13 +542,16 @@ export async function handleRecordPayment(request: Request, env: Env): Promise<R
       return errorResponse('winnerId, walletAddress, and txHash are required');
     }
 
+    const db = getDB(env);
+    if (!db) return errorResponse('Database not connected', 500);
+
     const paymentId = `pay_${crypto.randomUUID()}`;
-    await env.DB.prepare(`
+    await db.prepare(`
       INSERT INTO reward_payments (id, winner_id, wallet_address, bnb_amount, tx_hash, status)
       VALUES (?, ?, ?, ?, ?, 'CONFIRMED')
     `).bind(paymentId, winnerId, walletAddress, bnbAmount || '0.002', txHash).run();
 
-    await env.DB.prepare("UPDATE social_submissions SET status = 'PAID' WHERE wallet_address = ?")
+    await db.prepare("UPDATE social_submissions SET status = 'PAID' WHERE wallet_address = ?")
       .bind(walletAddress.toLowerCase()).run();
 
     return jsonResponse({ success: true, paymentId, message: 'Payment recorded successfully' });

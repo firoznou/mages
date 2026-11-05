@@ -2,6 +2,11 @@
   "name": "wezards-api",
   "main": "backend/src/index.ts",
   "compatibility_date": "2026-11-05",
+  "assets": {
+    "directory": "frontend/out",
+    "binding": "ASSETS",
+    "not_found_handling": "single-page-application"
+  },
   "vars": {
     "ENVIRONMENT": "production",
     "CHAIN_ID": 56,

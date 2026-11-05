@@ -2,14 +2,25 @@ name = "wezards-api"
 main = "src/index.ts"
 compatibility_date = "2026-11-05"
 
+[assets]
+directory = "../frontend/out"
+binding = "ASSETS"
+not_found_handling = "single-page-application"
+
 [vars]
 ENVIRONMENT = "production"
-CHAIN_ID = 97
+CHAIN_ID = 56
 MAX_WINNERS_TARGET = 1000
-BNB_PRICE_USD_SNAPSHOT = 550.0
+BNB_PRICE_USD_SNAPSHOT = 600.0
 
 [[d1_databases]]
 binding = "DB"
+database_name = "wezards"
+database_id = "9473b3f1-26a1-4477-b12a-a3aa1804535f"
+migrations_dir = "migrations"
+
+[[d1_databases]]
+binding = "datasets-wezards"
 database_name = "wezards"
 database_id = "9473b3f1-26a1-4477-b12a-a3aa1804535f"
 migrations_dir = "migrations"
