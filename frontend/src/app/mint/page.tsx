@@ -187,7 +187,7 @@ export default function MintPage() {
           params: [{
             from: wallet,
             to: CONTRACT_ADDRESSES.NFT,
-            data: '0x932c02dc', // mintAgenticFree selector
+            data: '0x5b70ea9f', // freeMint() on-chain selector
             value: '0x0'
           }]
         });
@@ -247,6 +247,8 @@ export default function MintPage() {
       setStatusMessage('Please confirm the payment in your wallet...');
 
       const valueWei = '0x' + (BigInt(paidQuantity) * BigInt(1e15)).toString(16); // 0.001 BNB per NFT in wei
+      const qtyHex = BigInt(paidQuantity).toString(16).padStart(64, '0');
+      const paidCalldata = '0x65cde733' + qtyHex; // paidMint(uint256) selector + quantity
 
       let txHash = '0x';
       try {
@@ -256,7 +258,7 @@ export default function MintPage() {
             from: wallet,
             to: CONTRACT_ADDRESSES.NFT,
             value: valueWei,
-            data: '0xa0712d68' // mintPaid selector
+            data: paidCalldata
           }]
         });
       } catch (txErr: any) {
@@ -360,92 +362,108 @@ export default function MintPage() {
   };
 
   // Agent Prompts & Code Snippets
-  const agentSystemPrompt = `You are an Autonomous Web3 Minting Agent equipped with a Binance Agentic Wallet.
-Target Contract: WeZardsNFT (ERC-721) on BNB Smart Chain (ChainID: 56)
-RPC Endpoint: https://bsc-dataseed.binance.org/
-NFT Contract Address: ${CONTRACT_ADDRESSES.NFT}
-Verification Endpoint: https://wezards.bunink.xyz/api/agentic/verify?wallet=<YOUR_AGENT_WALLET>
-Website: https://wezards.bunink.xyz/
+  const agentSystemPrompt = `Please preview and execute this NFT mint transaction on BNB Smart Chain (Chain ID: 56):
 
-Instructions:
-1. Verify free-mint eligibility: Call the verification endpoint with your agent wallet address.
-2. If verified, extract { signature, nonce, deadline } and call:
-   contract.mintAgenticFree(signature, nonce, deadline)
-   (Cost: 0.000 BNB + standard BSC network gas).
-3. If public paid mint is specified, call:
-   contract.mintPaid(quantity) with msg.value = quantity * 0.001 ether (Max 10 NFTs per wallet).
-4. After transaction confirmation, record the received token ID.
-5. All minted NFTs qualify for 500-1,500 MAGES random rewards: proceed to reward claim protocol.`;
+[OPTION 1: PUBLIC PAID MINT - 1 WEZARDS NFT]
+- Network: BNB Smart Chain (Chain ID: 56)
+- Target Contract: ${CONTRACT_ADDRESSES.NFT}
+- Function: paidMint(uint256 quantity)
+- Quantity: 1
+- Value: 0.001 BNB (1000000000000000 wei)
+- Exact Calldata: 0x65cde7330000000000000000000000000000000000000000000000000000000000000001
+- Gas Limit: 150000
 
-  const agentTokenClaimPrompt = `You are an Autonomous Web3 Reward Agent claiming MAGES tokens on BNB Smart Chain.
-Token Contract: MAGES (BEP-20) at ${CONTRACT_ADDRESSES.TOKEN}
-NFT Contract: WeZardsNFT (ERC-721) at ${CONTRACT_ADDRESSES.NFT}
-Rewards Contract: WeZardsNFTRewards
-Chain: BNB Smart Chain (ChainID: 56)
-Decimals: 18 | Total Supply: 21,000,000 MAGES
+[OPTION 2: AGENTIC FREE MINT - 1 FREE NFT]
+- Network: BNB Smart Chain (Chain ID: 56)
+- Target Contract: ${CONTRACT_ADDRESSES.NFT}
+- Function: freeMint()
+- Value: 0.000 BNB (0 wei)
+- Exact Calldata: 0x5b70ea9f
+- Gas Limit: 120000
 
-Instructions for MAGES Token Claims:
-1. Query your wallet's owned WeZards NFT token IDs via WeZardsNFT.balanceOf(wallet) and tokenOfOwnerByIndex.
-2. Check reward status for each tokenId: call WeZardsNFTRewards.isRewardClaimed(tokenId).
-3. If unclaimed, trigger the Chainlink VRF random reward:
-   - Single NFT: call WeZardsNFTRewards.claimReward(tokenId)
-   - Multiple NFTs: call WeZardsNFTRewards.batchClaimRewards([tokenIds])
-4. Random reward allocation: 500 to 1,500 MAGES tokens will be transferred directly to your minter wallet upon VRF fulfillment.
-5. Check your MAGES balance: call MAGES.balanceOf(wallet).`;
+Instructions for Binance AI:
+1. Parse the provided calldata for the chosen mint option.
+2. Display the transaction preview with target contract address (${CONTRACT_ADDRESSES.NFT}), gas estimate, and value.
+3. Do not fetch external third-party APIs — all required parameters and raw hex calldata are provided above.
+4. Prepare the transaction preview and await user confirmation to send on Chain 56.`;
 
-  const agentCliSnippet = `# 1. Pair Binance Agentic Wallet:
-binance-agent pair --network bsc-mainnet --app https://wezards.bunink.xyz/
+  const agentTokenClaimPrompt = `Please preview and execute this MAGES Token Reward claim transaction on BNB Smart Chain (Chain ID: 56):
 
-# 2. Free Agentic NFT Mint via Binance Agent CLI:
+[MAGES RANDOM REWARD CLAIM PROTOCOL]
+- Network: BNB Smart Chain (Chain ID: 56)
+- Target Contract: ${CONTRACT_ADDRESSES.TOKEN} (21,000,000 MAGES Fixed Supply)
+- NFT Contract: ${CONTRACT_ADDRESSES.NFT}
+- Function: claimReward(uint256 tokenId)
+- Token ID: 1
+- Value: 0.000 BNB (0 wei)
+- Exact Calldata: 0xae169a500000000000000000000000000000000000000000000000000000000000000001
+- Gas Limit: 180000
+
+Reward Rules:
+- Every minted WeZards NFT receives a random reward between 500 and 1,500 MAGES tokens.
+- Tokens transfer directly to the minter's wallet upon Chainlink VRF fulfillment.
+- Each NFT can receive rewards only once.
+
+Instructions for Binance AI:
+1. Parse calldata 0xae169a500000000000000000000000000000000000000000000000000000000000000001 for Token #1.
+2. Preview transaction with 0 BNB value and standard network gas.
+3. Await explicit confirmation to execute on BSC Mainnet.`;
+
+  const agentCliSnippet = `# 1. Public Paid Mint (1 WeZards NFT @ 0.001 BNB):
 binance-agent exec \\
-  --contract ${CONTRACT_ADDRESSES.NFT} \\
-  --method mintAgenticFree \\
-  --signature-api "https://wezards.bunink.xyz/api/agentic/verify" \\
-  --chain bsc
+  --chain bsc \\
+  --to ${CONTRACT_ADDRESSES.NFT} \\
+  --value 0.001bnb \\
+  --data "0x65cde7330000000000000000000000000000000000000000000000000000000000000001"
 
-# 3. Public Paid Mint (e.g. 5 NFTs @ 0.005 BNB):
+# 2. Agentic Free Mint (0.000 BNB):
 binance-agent exec \\
-  --contract ${CONTRACT_ADDRESSES.NFT} \\
-  --method mintPaid \\
-  --args '[5]' \\
-  --value 0.005bnb \\
-  --chain bsc
+  --chain bsc \\
+  --to ${CONTRACT_ADDRESSES.NFT} \\
+  --value 0.0bnb \\
+  --data "0x5b70ea9f"
 
-# 4. Claim 500-1,500 MAGES Random Rewards for Token #1:
+# 3. Claim 500-1,500 MAGES Random Rewards for Token #1:
 binance-agent exec \\
-  --contract ${CONTRACT_ADDRESSES.TOKEN} \\
-  --method claimReward \\
-  --args '[1]' \\
-  --chain bsc`;
+  --chain bsc \\
+  --to ${CONTRACT_ADDRESSES.TOKEN} \\
+  --value 0.0bnb \\
+  --data "0xae169a500000000000000000000000000000000000000000000000000000000000000001"`;
 
   const agentPythonSnippet = `from web3 import Web3
-import requests
 
 w3 = Web3(Web3.HTTPProvider('https://bsc-dataseed.binance.org/'))
-wallet_address = '0xYourAgentWalletAddress'
+wallet_address = '0xYourWalletAddress'
 private_key = '0xYourPrivateKey'
 
-# Step 1: Query Agentic Eligibility & Proof
-res = requests.get(f'https://wezards.bunink.xyz/api/agentic/verify?wallet={wallet_address}').json()
-if res.get('isEligible'):
-    signature = bytes.fromhex(res['signature'][2:])
-    nonce = bytes.fromhex(res['nonce'][2:])
-    deadline = res['deadline']
+# Option A: Paid Mint (1 WeZards NFT @ 0.001 BNB)
+tx_paid = {
+    'from': wallet_address,
+    'to': '${CONTRACT_ADDRESSES.NFT}',
+    'value': w3.to_wei(0.001, 'ether'),
+    'data': '0x65cde7330000000000000000000000000000000000000000000000000000000000000001',
+    'gas': 150000,
+    'gasPrice': w3.to_wei('3', 'gwei'),
+    'nonce': w3.eth.get_transaction_count(wallet_address),
+    'chainId': 56
+}
+signed = w3.eth.account.sign_transaction(tx_paid, private_key)
+tx_hash = w3.eth.send_raw_transaction(signed.rawTransaction)
+print(f'Paid Mint Tx: {tx_hash.hex()}')
 
-    # Step 2: Call mintAgenticFree on WeZardsNFT
-    nft_contract = w3.eth.contract(address='${CONTRACT_ADDRESSES.NFT}', abi=NFT_ABI)
-    tx = nft_contract.functions.mintAgenticFree(signature, nonce, deadline).build_transaction({
-        'from': wallet_address,
-        'nonce': w3.eth.get_transaction_count(wallet_address),
-        'gas': 250000,
-        'gasPrice': w3.to_wei('3', 'gwei')
-    })
-    signed = w3.eth.account.sign_transaction(tx, private_key)
-    tx_hash = w3.eth.send_raw_transaction(signed.rawTransaction)
-    print(f'Minted WeZards NFT! Tx: {tx_hash.hex()}')
-
-    # Step 3: Claim MAGES Random Reward (500 - 1,500 MAGES)
-    # Target Token: ${CONTRACT_ADDRESSES.TOKEN}`;
+# Option B: Free Agentic Mint (0.000 BNB)
+tx_free = {
+    'from': wallet_address,
+    'to': '${CONTRACT_ADDRESSES.NFT}',
+    'value': 0,
+    'data': '0x5b70ea9f',
+    'gas': 120000,
+    'gasPrice': w3.to_wei('3', 'gwei'),
+    'nonce': w3.eth.get_transaction_count(wallet_address),
+    'chainId': 56
+}
+# signed_free = w3.eth.account.sign_transaction(tx_free, private_key)
+# tx_hash_free = w3.eth.send_raw_transaction(signed_free.rawTransaction)`;
 
   const handleCopy = (text: string, type: string) => {
     navigator.clipboard.writeText(text);
@@ -1098,8 +1116,8 @@ if res.get('isEligible'):
           {/* Subtabs for Agent Methods */}
           <div className="flex flex-wrap gap-2 mb-5">
             {[
-              { id: 'prompt', label: '1. NFT Minting Prompt', icon: '📝' },
-              { id: 'tokenPrompt', label: '2. MAGES Token Claiming Prompt', icon: '🪙' },
+              { id: 'prompt', label: '1. Binance AI Mint Prompt', icon: '🤖' },
+              { id: 'tokenPrompt', label: '2. Binance AI Token Prompt', icon: '🪙' },
               { id: 'cli', label: '3. Binance Agent CLI', icon: '💻' },
               { id: 'python', label: '4. Python Web3 Bot', icon: '🐍' },
               { id: 'simulation', label: '5. Run Agent Simulation', icon: '⚡' }
@@ -1122,12 +1140,12 @@ if res.get('isEligible'):
           {agentTab === 'prompt' && (
             <div className="space-y-3">
               <div className="flex items-center justify-between text-xs text-gray-400">
-                <span>Copy this system prompt into your LLM agent for WeZards NFT minting:</span>
+                <span>Copy this exact transaction prompt into Binance AI (Developer Mode):</span>
                 <button
                   onClick={() => handleCopy(agentSystemPrompt, 'prompt')}
                   className="px-3 py-1 rounded-lg bg-[#24133D] hover:bg-[#341B55] text-[#F59E0B] font-bold border border-[#2E1B4E] transition flex items-center gap-1"
                 >
-                  {copiedType === 'prompt' ? '✓ Copied NFT Prompt!' : 'Copy NFT Prompt'}
+                  {copiedType === 'prompt' ? '✓ Copied Mint Prompt!' : 'Copy Binance AI Prompt'}
                 </button>
               </div>
 
@@ -1140,6 +1158,15 @@ if res.get('isEligible'):
           {/* Tab 2: MAGES Token Claiming System Prompt */}
           {agentTab === 'tokenPrompt' && (
             <div className="space-y-3">
+              <div className="flex items-center justify-between text-xs text-gray-400">
+                <span>Copy this prompt into Binance AI to claim 500-1,500 MAGES random reward:</span>
+                <button
+                  onClick={() => handleCopy(agentTokenClaimPrompt, 'tokenPrompt')}
+                  className="px-3 py-1 rounded-lg bg-[#24133D] hover:bg-[#341B55] text-[#F59E0B] font-bold border border-[#2E1B4E] transition flex items-center gap-1"
+                >
+                  {copiedType === 'tokenPrompt' ? '✓ Copied Token Prompt!' : 'Copy Token Prompt'}
+                </button>
+              </div>
               <div className="flex items-center justify-between text-xs text-gray-400">
                 <span>Copy this prompt for autonomous MAGES token reward claiming:</span>
                 <button
