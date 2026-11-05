@@ -22,3 +22,4 @@ CREATE TABLE IF NOT EXISTS minting_gift_claims (
 CREATE INDEX IF NOT EXISTS idx_gift_wallet ON minting_gift_claims(wallet_address);
 CREATE INDEX IF NOT EXISTS idx_gift_status ON minting_gift_claims(status);
 CREATE INDEX IF NOT EXISTS idx_gift_created_at ON minting_gift_claims(created_at);
+

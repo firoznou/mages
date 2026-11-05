@@ -1,6 +1,6 @@
 name = "wezards-api"
 main = "src/index.ts"
-compatibility_date = "2024-04-01"
+compatibility_date = "2026-11-05"
 
 [vars]
 ENVIRONMENT = "production"
@@ -9,7 +9,7 @@ MAX_WINNERS_TARGET = 1000
 BNB_PRICE_USD_SNAPSHOT = 550.0
 
 [[d1_databases]]
-binding = "datasets-wezards"
+binding = "DB"
 database_name = "wezards"
-database_id = "00000000-0000-0000-0000-000000000000"
+database_id = "9473b3f1-26a1-4477-b12a-a3aa1804535f"
 migrations_dir = "migrations"
