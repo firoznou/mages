@@ -1,0 +1,34 @@
+{
+  "name": "wezards-ecosystem",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Production-ready Web3 Ecosystem on BNB Smart Chain: Token, NFTs, Marketplace, AI Generation, Cloudflare D1 & Workers, and Dual Portals",
+  "workspaces": [
+    "generator",
+    "backend",
+    "frontend",
+    "admin"
+  ],
+  "scripts": {
+    "contracts:build": "forge build --root contracts",
+    "contracts:test": "forge test --root contracts -vvv",
+    "generate:nfts": "npm --prefix generator run generate",
+    "backend:dev": "npm --prefix backend run dev",
+    "frontend:dev": "npm --prefix frontend run dev",
+    "admin:dev": "npm --prefix admin run dev"
+  },
+  "keywords": [
+    "solidity",
+    "foundry",
+    "bnb-chain",
+    "erc721",
+    "erc20",
+    "marketplace",
+    "cloudflare-workers",
+    "cloudflare-d1",
+    "nextjs",
+    "binance-agentic-wallet"
+  ],
+  "author": "WeZards Core Architecture Team",
+  "license": "MIT"
+}
