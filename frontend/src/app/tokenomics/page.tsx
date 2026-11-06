@@ -10,7 +10,7 @@ export default function TokenomicsPage() {
       percentage: 40,
       amount: '8,400,000',
       color: '#F59E0B',
-      description: 'Dedicated to community incentives, protocol liquidity, platform development, and the 500-1,500 MAGES random rewards for paid-mint NFT holders.'
+      description: 'Dedicated to community incentives, protocol liquidity, platform development, and the 300-700 MAGES random rewards for paid-mint NFT holders.'
     },
     {
       category: 'Public Presale',

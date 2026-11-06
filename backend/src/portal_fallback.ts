@@ -141,8 +141,8 @@ export function renderPortalFallback(pathname: string): Response {
       <div class="flex items-center gap-3 mb-4">
         <span class="text-3xl">🎁</span>
         <div>
-          <h3 class="text-2xl font-black text-white">WeZards Community Minting Gift</h3>
-          <p class="text-xs text-amber-300">Share your WeZards journey on X (Twitter) & receive exclusive MAGES Token gifts!</p>
+          <h3 class="text-2xl font-black text-white">Share on X &amp; Claim 1$ Bonus Gift</h3>
+          <p class="text-xs text-amber-300">Share your WeZards journey on X (Twitter) &amp; receive exclusive 1$ MAGES bonus gift!</p>
         </div>
       </div>
 

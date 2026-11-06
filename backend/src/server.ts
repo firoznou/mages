@@ -264,7 +264,7 @@ export const server = http.createServer(async (req, res) => {
         tokenId,
         isPaidMint: isPaid,
         eligibleForReward: isPaid,
-        rewardRange: '500 - 1,500 MAGES',
+        rewardRange: '300 - 700 MAGES',
         ineligibilityReason: isPaid ? null : 'Token was acquired via free agentic mint or airdrop'
       });
     }

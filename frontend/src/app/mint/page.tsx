@@ -417,7 +417,7 @@ After resting 10-15 seconds and confirming NFT mint inclusion, preview and execu
 - Value: 0.000 BNB (0 wei)
 - Exact Calldata: 0xae169a500000000000000000000000000000000000000000000000000000000000000001
 - Gas Limit: 180000
-- Reward: Claims 500 to 1,500 MAGES random reward tokens directly to minter wallet.
+- Reward: Claims 300 to 700 MAGES random reward tokens directly to minter wallet.
 
 Instructions for Binance AI / Agent:
 1. Preview Step 1 NFT mint transaction and prompt for user confirmation.
@@ -542,7 +542,7 @@ print(f'Step 3 MAGES Token Claim broadcasted: {tx_hash_claim.hex()}')`;
       // Step 3: Token Minting / Claiming
       setSimLogs(prev => [...prev, `[Step 3: Token Claim] Simulating claimReward(1) on MAGES Token contract (${formatAddress(CONTRACT_ADDRESSES.TOKEN)})...`]);
       await new Promise(r => setTimeout(r, 1000));
-      setSimLogs(prev => [...prev, '✓ Step 3 Success: 500 - 1,500 MAGES random reward claim verified.']);
+      setSimLogs(prev => [...prev, '✓ Step 3 Success: 300 - 700 MAGES random reward claim verified.']);
       setSimLogs(prev => [...prev, '🎉 Autonomous pipeline complete! NFT minted ➔ Rest 10-15s ➔ MAGES tokens claimed.']);
     } catch (err) {
       setSimLogs(prev => [...prev, `Simulation notice: ${err instanceof Error ? err.message : 'Registry or contract call notice.'}`]);
@@ -726,7 +726,7 @@ print(f'Step 3 MAGES Token Claim broadcasted: {tx_hash_claim.hex()}')`;
                         MAGES Token Rewards Claiming Progress
                       </span>
                       <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-300 border border-amber-500/20 font-mono">
-                        500 – 1,500 MAGES / NFT
+                        300 – 700 MAGES / NFT
                       </span>
                     </div>
                     <div className="font-mono text-xs sm:text-sm">
@@ -749,7 +749,7 @@ print(f'Step 3 MAGES Token Claim broadcasted: {tx_hash_claim.hex()}')`;
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between mt-2.5 text-[11px] font-mono text-gray-400 gap-2">
                     <span className="text-amber-400/90 font-medium flex items-center gap-1">
                       <span>⚡</span>
-                      <span>Every minted NFT qualifies for 1 Chainlink VRF reward (500–1,500 MAGES)</span>
+                      <span>Every minted NFT qualifies for 1 Chainlink VRF reward (300–700 MAGES)</span>
                     </span>
                     <Link
                       href="/rewards"
@@ -1000,7 +1000,7 @@ print(f'Step 3 MAGES Token Claim broadcasted: {tx_hash_claim.hex()}')`;
                 <span>Community Minting Gift & Social Tasks</span>
               </div>
               <h2 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
-                Complete Tasks on X & Claim Bonus Token Gift
+                Share on X &amp; Claim 1$ Bonus Gift
               </h2>
               <p className="text-xs sm:text-sm text-gray-400 mt-1 max-w-2xl leading-relaxed">
                 Follow <a href="https://x.com/nfthunter_wp" target="_blank" rel="noopener noreferrer" className="text-amber-400 font-bold hover:underline">@nfthunter_wp</a> on X, like and retweet the pinned post, and tweet tagging <span className="text-amber-400 font-bold">@nfthunter_wp</span> with <span className="text-[#F59E0B] font-bold">#agentID #lfg #wezards</span> and link <span className="text-[#F59E0B] font-bold">https://wezards.bunink.xyz/</span>. Submit your token holding wallet and screenshot proof to claim!
@@ -1385,7 +1385,7 @@ print(f'Step 3 MAGES Token Claim broadcasted: {tx_hash_claim.hex()}')`;
             <div className="p-3.5 rounded-xl bg-gradient-to-r from-amber-500/10 via-purple-500/10 to-amber-500/10 border border-amber-500/30 mb-5 text-left">
               <div className="text-[11px] font-bold text-[#F59E0B] flex items-center gap-1.5 mb-1">
                 <span>🪙</span>
-                <span>Eligible for 500 - 1,500 MAGES Reward!</span>
+                <span>Eligible for 300 - 700 MAGES Reward!</span>
               </div>
               <p className="text-[10px] text-gray-300 leading-relaxed">
                 Every WeZards NFT (Free & Paid) is eligible for 1 random MAGES token reward via Chainlink VRF.

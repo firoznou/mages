@@ -228,7 +228,7 @@ export default function HomePage() {
               <div className="text-2xl font-bold text-[#F59E0B] font-mono mb-1">40%</div>
               <div className="text-base font-bold text-white mb-2">Treasury & Ecosystem</div>
               <div className="text-xs text-gray-400 mb-2">8,400,000 MAGES</div>
-              <p className="text-xs text-gray-500">Fund for staking, paid-NFT random rewards (500-1,500 MAGES), and continuous ecosystem growth.</p>
+              <p className="text-xs text-gray-500">Fund for staking, paid-NFT random rewards (300-700 MAGES), and continuous ecosystem growth.</p>
             </div>
 
             <div className="p-6 rounded-2xl bg-[#160D27] border border-[#2E1B4E]">
@@ -282,7 +282,7 @@ export default function HomePage() {
             <div className="p-5 rounded-xl bg-[#160D27] border border-[#2E1B4E]">
               <h3 className="text-base font-bold text-white mb-2">What is the Paid NFT Random MAGES Reward?</h3>
               <p className="text-xs sm:text-sm text-gray-400 leading-relaxed">
-                Every qualifying paid-minted NFT (0.001 BNB) has its provenance recorded on-chain. Each paid NFT is eligible to claim a one-time random reward of 500 to 1,500 MAGES tokens, funded from the Treasury pool.
+                Every qualifying paid-minted NFT (0.001 BNB) has its provenance recorded on-chain. Each paid NFT is eligible to claim a one-time random reward of 300 to 700 MAGES tokens, funded from the Treasury pool.
               </p>
             </div>
           </div>

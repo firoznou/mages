@@ -110,7 +110,7 @@ export default function RewardsPage() {
       }).catch(() => null);
 
       const isMinted = Boolean(owner && owner !== '0x0000000000000000000000000000000000000000');
-      const estReward = Math.floor(500 + ((id * 73) % 1001));
+      const estReward = Math.floor(300 + ((id * 73) % 401));
 
       setCheckedResult({
         tokenId: id,
@@ -120,8 +120,8 @@ export default function RewardsPage() {
         isClaimed: false,
         rewardAmount: estReward,
         isEligible: isMinted,
-        eligibleRange: '500 - 1,500 MAGES',
-        status: isMinted ? 'Eligible for 500-1,500 MAGES' : 'Not Minted Yet on BSC'
+        eligibleRange: '300 - 700 MAGES',
+        status: isMinted ? 'Eligible for 300-700 MAGES' : 'Not Minted Yet on BSC'
       });
     } catch {
       setCheckedResult({
@@ -129,9 +129,9 @@ export default function RewardsPage() {
         isMinted: false,
         imageUrl: `${ASSET_BASE_URLS.IMAGES}/${id}.png`,
         isClaimed: false,
-        rewardAmount: 500,
+        rewardAmount: 300,
         isEligible: false,
-        eligibleRange: '500 - 1,500 MAGES',
+        eligibleRange: '300 - 700 MAGES',
         status: 'Token Not Minted Yet'
       });
     }
@@ -146,7 +146,7 @@ export default function RewardsPage() {
     setClaimStatusMsg('Chainlink VRF entropy fulfilled! Minting MAGES tokens to minter wallet...');
 
     await new Promise(r => setTimeout(r, 1400));
-    const randomAmount = Math.floor(500 + Math.random() * 1000);
+    const randomAmount = Math.floor(300 + Math.random() * 401);
 
     setUserNFTs(prev => prev.map(nft => {
       if (nft.tokenId === tokenId) {
@@ -190,7 +190,7 @@ export default function RewardsPage() {
     let totalAwarded = 0;
     const updated = userNFTs.map(nft => {
       if (!nft.isClaimed) {
-        const amt = Math.floor(500 + Math.random() * 1000);
+        const amt = Math.floor(300 + Math.random() * 401);
         totalAwarded += amt;
         return { ...nft, isClaimed: true, rewardAmount: amt };
       }
@@ -262,7 +262,7 @@ export default function RewardsPage() {
             WeZards NFT &amp; MAGES Rewards
           </h1>
           <p className="text-gray-400 text-sm sm:text-base leading-relaxed">
-            Every minted WeZards NFT (1 to 5,000) qualifies for one verifiable random reward of <span className="text-[#F59E0B] font-bold">500 to 1,500 MAGES</span> powered by Chainlink VRF.
+            Every minted WeZards NFT (1 to 5,000) qualifies for one verifiable random reward of <span className="text-[#F59E0B] font-bold">300 to 700 MAGES</span> powered by Chainlink VRF.
           </p>
         </div>
 
@@ -275,7 +275,7 @@ export default function RewardsPage() {
           </div>
           <div className="p-4 sm:p-5 rounded-2xl bg-[#160D27] border border-[#2E1B4E]">
             <div className="text-[11px] text-gray-400 uppercase font-bold tracking-wider mb-1">Random Reward</div>
-            <div className="text-2xl sm:text-3xl font-black font-mono text-[#F59E0B]">500 - 1,500</div>
+            <div className="text-2xl sm:text-3xl font-black font-mono text-[#F59E0B]">300 - 700</div>
             <div className="text-[11px] text-gray-400 mt-1">MAGES per WeZards NFT</div>
           </div>
           <div className="p-4 sm:p-5 rounded-2xl bg-[#160D27] border border-[#2E1B4E]">
@@ -403,8 +403,8 @@ export default function RewardsPage() {
                   {
                     step: '6',
                     title: 'Generate Random Reward',
-                    desc: 'The reward contract requests randomness through Chainlink VRF. Each eligible NFT receives between 500 and 1,500 MAGES.',
-                    tag: '500 - 1,500 MAGES',
+                    desc: 'The reward contract requests randomness through Chainlink VRF. Each eligible NFT receives between 300 and 700 MAGES.',
+                    tag: '300 - 700 MAGES',
                     tagColor: 'bg-purple-500/20 text-purple-300'
                   },
                   {
@@ -448,7 +448,7 @@ export default function RewardsPage() {
                 <div className="text-gray-300">• Maximum eligible NFTs: <span className="text-[#F59E0B] font-bold">5,000 NFTs</span>.</div>
                 <div className="text-gray-300">• One NFT = One random reward. Two NFTs = Two random rewards.</div>
                 <div className="text-gray-300">• Each NFT can receive rewards <span className="text-purple-400 font-bold">only once</span>.</div>
-                <div className="text-gray-300">• Minimum reward: <span className="text-emerald-400 font-bold">500 MAGES</span> per NFT | Maximum reward: <span className="text-amber-400 font-bold">1,500 MAGES</span> per NFT.</div>
+                <div className="text-gray-300">• Minimum reward: <span className="text-emerald-400 font-bold">300 MAGES</span> per NFT | Maximum reward: <span className="text-amber-400 font-bold">700 MAGES</span> per NFT.</div>
               </div>
             </div>
           </div>
@@ -520,7 +520,7 @@ export default function RewardsPage() {
                   </div>
                   <div className="text-white font-bold text-base mb-1">No WeZards NFTs In Connected Wallet</div>
                   <p className="text-xs text-gray-400 max-w-md mx-auto mb-5 leading-relaxed">
-                    Every minted WeZards NFT (Free & Paid) is eligible for one random reward of 500 - 1,500 MAGES.
+                    Every minted WeZards NFT (Free & Paid) is eligible for one random reward of 300 - 700 MAGES.
                     Connect a wallet holding WeZards NFTs or mint an NFT to activate your reward claim!
                   </p>
                   <Link
@@ -550,7 +550,7 @@ export default function RewardsPage() {
                           </span>
                         </div>
                         <div className="text-xs font-mono text-gray-400 mb-3">
-                          Reward: <span className="text-[#F59E0B] font-bold">500 - 1,500 MAGES</span>
+                          Reward: <span className="text-[#F59E0B] font-bold">300 - 700 MAGES</span>
                         </div>
                       </div>
 
