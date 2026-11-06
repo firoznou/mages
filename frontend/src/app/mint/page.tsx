@@ -131,6 +131,9 @@ export default function MintPage() {
         setFreeMinted(stats.freeMinted);
         setPaidMinted(stats.paidMinted);
         setBlockHeight(stats.blockNumber);
+        if (typeof (stats as any).tokenRewardsClaimed === 'number') {
+          setTokenRewardsClaimed((stats as any).tokenRewardsClaimed);
+        }
       } catch (err) {
         console.error('Failed to fetch on-chain stats:', err);
       }
@@ -649,47 +652,7 @@ print(f'Step 3 MAGES Token Claim broadcasted: {tx_hash_claim.hex()}')`;
               {/* Progress Bars Section */}
               <div className="space-y-4 mb-6">
                 
-                {/* 1. Free Mint Allocation Progress */}
-                <div className="p-4 sm:p-5 rounded-2xl bg-[#090514] border border-amber-500/30 shadow-lg relative overflow-hidden">
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 mb-2.5">
-                    <div className="flex items-center gap-2">
-                      <span className="w-2.5 h-2.5 rounded-full bg-amber-400 animate-pulse"></span>
-                      <span className="text-xs font-bold text-white uppercase tracking-wider">
-                        Agent ID Free Mint Live Progress
-                      </span>
-                      {recentMintType === 'free' && (
-                        <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-500/20 text-[#F59E0B] border border-amber-500/30 animate-pulse font-mono font-bold">
-                          +1 Live Claimed
-                        </span>
-                      )}
-                    </div>
-                    <div className="font-mono text-xs sm:text-sm">
-                      <span className="text-amber-400 font-extrabold">{freeMinted.toLocaleString()}</span>
-                      <span className="text-gray-400"> / {FREE_CAP.toLocaleString()} claimed </span>
-                      <span className="text-amber-300 font-bold">({freePercent.toFixed(1)}%)</span>
-                    </div>
-                  </div>
-
-                  {/* Progress Track */}
-                  <div className="relative w-full h-3.5 bg-[#160D27] rounded-full overflow-hidden p-0.5 border border-[#2E1B4E]">
-                    <div
-                      style={{ width: `${Math.max(freePercent, freeMinted > 0 ? 1 : 0)}%` }}
-                      className="h-full rounded-full bg-gradient-to-r from-amber-600 via-yellow-400 to-amber-500 shadow-[0_0_12px_rgba(245,158,11,0.6)] transition-all duration-700 ease-out"
-                    />
-                  </div>
-
-                  <div className="flex items-center justify-between mt-2 text-[11px] font-mono text-gray-400">
-                    <span className="text-amber-400/90 font-medium flex items-center gap-1">
-                      <span>⚡</span>
-                      <span>{(FREE_CAP - freeMinted).toLocaleString()} Free Spots Remaining</span>
-                    </span>
-                    <span className="text-gray-500">
-                      Cap: 1 Free / Wallet
-                    </span>
-                  </div>
-                </div>
-
-                {/* 2. Total Collection Mint Progress */}
+                {/* 1. Total Collection Mint Progress */}
                 <div className="p-4 sm:p-5 rounded-2xl bg-[#090514] border border-purple-500/30 shadow-lg relative overflow-hidden">
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 mb-2.5">
                     <div className="flex items-center gap-2">
@@ -723,7 +686,7 @@ print(f'Step 3 MAGES Token Claim broadcasted: {tx_hash_claim.hex()}')`;
 
                   <div className="flex items-center justify-between mt-2 text-[11px] font-mono text-gray-400">
                     <span className="text-emerald-400 font-medium">
-                      ⚡ {(TOTAL_SUPPLY - totalMinted).toLocaleString()} Total Remaining
+                      ⚡ {Math.max(0, TOTAL_SUPPLY - totalMinted).toLocaleString()} Total Remaining
                     </span>
                     <div className="flex items-center gap-3 text-[10px]">
                       <span className="flex items-center gap-1 text-amber-400">
@@ -736,7 +699,7 @@ print(f'Step 3 MAGES Token Claim broadcasted: {tx_hash_claim.hex()}')`;
                   </div>
                 </div>
 
-                {/* 3. MAGES Token Rewards Claiming Progress */}
+                {/* 2. MAGES Token Rewards Claiming Progress */}
                 <div className="p-4 sm:p-5 rounded-2xl bg-[#090514] border border-[#7928CA]/40 shadow-lg relative overflow-hidden">
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 mb-2.5">
                     <div className="flex items-center gap-2">
@@ -777,6 +740,46 @@ print(f'Step 3 MAGES Token Claim broadcasted: {tx_hash_claim.hex()}')`;
                       <span>Claim MAGES Tokens</span>
                       <span>→</span>
                     </Link>
+                  </div>
+                </div>
+
+                {/* 3. Agent ID Free Mint Allocation Progress */}
+                <div className="p-4 sm:p-5 rounded-2xl bg-[#090514] border border-amber-500/30 shadow-lg relative overflow-hidden">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 mb-2.5">
+                    <div className="flex items-center gap-2">
+                      <span className="w-2.5 h-2.5 rounded-full bg-amber-400 animate-pulse"></span>
+                      <span className="text-xs font-bold text-white uppercase tracking-wider">
+                        Agent ID Free Mint Live Progress
+                      </span>
+                      {recentMintType === 'free' && (
+                        <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-500/20 text-[#F59E0B] border border-amber-500/30 animate-pulse font-mono font-bold">
+                          +1 Live Claimed
+                        </span>
+                      )}
+                    </div>
+                    <div className="font-mono text-xs sm:text-sm">
+                      <span className="text-amber-400 font-extrabold">{freeMinted.toLocaleString()}</span>
+                      <span className="text-gray-400"> / {FREE_CAP.toLocaleString()} claimed </span>
+                      <span className="text-amber-300 font-bold">({freePercent.toFixed(1)}%)</span>
+                    </div>
+                  </div>
+
+                  {/* Progress Track */}
+                  <div className="relative w-full h-3.5 bg-[#160D27] rounded-full overflow-hidden p-0.5 border border-[#2E1B4E]">
+                    <div
+                      style={{ width: `${Math.max(freePercent, freeMinted > 0 ? 1 : 0)}%` }}
+                      className="h-full rounded-full bg-gradient-to-r from-amber-600 via-yellow-400 to-amber-500 shadow-[0_0_12px_rgba(245,158,11,0.6)] transition-all duration-700 ease-out"
+                    />
+                  </div>
+
+                  <div className="flex items-center justify-between mt-2 text-[11px] font-mono text-gray-400">
+                    <span className="text-amber-400/90 font-medium flex items-center gap-1">
+                      <span>⚡</span>
+                      <span>{Math.max(0, FREE_CAP - freeMinted).toLocaleString()} Free Spots Remaining</span>
+                    </span>
+                    <span className="text-gray-500">
+                      Cap: 1 Free / Wallet
+                    </span>
                   </div>
                 </div>
 

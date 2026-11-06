@@ -209,7 +209,11 @@ export async function fetchOnChainMintStats() {
       'function freeMinted() view returns (uint256)',
       'function paidMinted() view returns (uint256)'
     ]);
-    const [free, paid, block] = await Promise.all([
+    const tokenAbi = parseAbi([
+      'function remainingFreeClaims() view returns (uint256)',
+      'function MAX_FREE_CLAIMS() view returns (uint256)'
+    ]);
+    const [free, paid, block, remFree, maxFree] = await Promise.all([
       bscPublicClient.readContract({
         address: CONTRACT_ADDRESSES.NFT as `0x${string}`,
         abi,
@@ -220,17 +224,29 @@ export async function fetchOnChainMintStats() {
         abi,
         functionName: 'paidMinted'
       }).catch(() => BigInt(0)),
-      bscPublicClient.getBlockNumber().catch(() => BigInt(131857855))
+      bscPublicClient.getBlockNumber().catch(() => BigInt(131857855)),
+      bscPublicClient.readContract({
+        address: CONTRACT_ADDRESSES.TOKEN as `0x${string}`,
+        abi: tokenAbi,
+        functionName: 'remainingFreeClaims'
+      }).catch(() => BigInt(5000)),
+      bscPublicClient.readContract({
+        address: CONTRACT_ADDRESSES.TOKEN as `0x${string}`,
+        abi: tokenAbi,
+        functionName: 'MAX_FREE_CLAIMS'
+      }).catch(() => BigInt(5000))
     ]);
 
     const freeNum = Number(free);
     const paidNum = Number(paid);
     const total = freeNum + paidNum;
+    const rewardsClaimed = Math.max(0, Number(maxFree) - Number(remFree));
 
     return {
       freeMinted: freeNum,
       paidMinted: paidNum,
       totalMinted: total,
+      tokenRewardsClaimed: rewardsClaimed,
       remaining: Math.max(0, 5000 - total),
       blockNumber: Number(block)
     };
@@ -239,6 +255,7 @@ export async function fetchOnChainMintStats() {
       freeMinted: 0,
       paidMinted: 0,
       totalMinted: 0,
+      tokenRewardsClaimed: 0,
       remaining: 5000,
       blockNumber: 131857855
     };
