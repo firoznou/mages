@@ -194,7 +194,7 @@ export function renderPortalFallback(pathname: string): Response {
           <span class="font-bold text-white">MAGES Token (ERC-20)</span>
           <span class="text-amber-400">21,000,000 Cap</span>
         </div>
-        <a href="https://bscscan.com/token/0x8203186135Fc512859a5B0Fdecd0Ea05571Aa952" target="_blank" rel="noopener noreferrer" class="text-amber-300 hover:text-white truncate block">0x8203186135Fc512859a5B0Fdecd0Ea05571Aa952</a>
+        <a href="https://bscscan.com/token/0xE12A32c9E92f0584ede944465960D97238013107" target="_blank" rel="noopener noreferrer" class="text-amber-300 hover:text-white truncate block">0xE12A32c9E92f0584ede944465960D97238013107</a>
       </div>
     </div>
   </main>
