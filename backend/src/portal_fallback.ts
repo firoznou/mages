@@ -187,7 +187,7 @@ export function renderPortalFallback(pathname: string): Response {
           <span class="font-bold text-white">WeZards NFT (ERC-721)</span>
           <span class="text-emerald-400">5,000 Cap</span>
         </div>
-        <a href="https://bscscan.com/address/0x5D0EAF09Cf125FeE23f0faA093E2Ac79034fe08c" target="_blank" rel="noopener noreferrer" class="text-purple-300 hover:text-white truncate block">0x5D0EAF09Cf125FeE23f0faA093E2Ac79034fe08c</a>
+        <a href="https://bscscan.com/address/0xe4d7Ec33Fcf7D93cBE7F4D46d0ef35F437956aab" target="_blank" rel="noopener noreferrer" class="text-purple-300 hover:text-white truncate block">0xe4d7Ec33Fcf7D93cBE7F4D46d0ef35F437956aab</a>
       </div>
       <div class="bg-[#120824] border border-[#2A1747] p-4 rounded-2xl">
         <div class="flex justify-between items-center text-gray-400 mb-1">

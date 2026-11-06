@@ -1,6 +1,7 @@
 import { hashPassword, verifyPassword, generateSessionToken } from './auth.ts';
 import { selectVerifiableWinners } from './winner_selector.ts';
 import type { CandidateEntry } from './winner_selector.ts';
+import { verifyAgentIdOwner, SPACE_ID_AGENT_ID_REGISTRY } from './agent_id.ts';
 
 export interface Env {
   DB?: any;
@@ -14,7 +15,8 @@ export interface Env {
   ADMIN_INITIAL_USERNAME?: string;
   ADMIN_INITIAL_PASSWORD?: string;
   ADMIN_JWT_SECRET?: string;
-  BINANCE_AGENTIC_VERIFIER_PRIVATE_KEY?: string;
+  BSC_RPC_URL?: string;
+  SPACE_ID_AGENT_ID_REGISTRY?: string;
 }
 
 export function getDB(env: Env): any {
@@ -212,40 +214,47 @@ export async function handleCampaignSubmit(request: Request, env: Env): Promise<
 }
 
 export async function handleAgenticVerify(request: Request, env: Env): Promise<Response> {
+  let walletAddress: unknown;
+
+  if (request.method === 'GET') {
+    walletAddress = new URL(request.url).searchParams.get('wallet');
+  } else if (request.method === 'POST') {
+    try {
+      const body = await request.json() as { walletAddress?: unknown; wallet?: unknown };
+      walletAddress = body.walletAddress ?? body.wallet;
+    } catch {
+      return errorResponse('Request body must be valid JSON', 400);
+    }
+  } else {
+    return errorResponse('Method not allowed', 405);
+  }
+
+  if (typeof walletAddress !== 'string' || !/^0x[a-fA-F0-9]{40}$/.test(walletAddress)) {
+    return errorResponse('Valid BNB Smart Chain wallet address required', 400);
+  }
+  if (env.CHAIN_ID !== 56) {
+    return errorResponse('Agent ID verification is configured for BNB Mainnet (chain ID 56) only', 503);
+  }
+
+  const registryAddress = env.SPACE_ID_AGENT_ID_REGISTRY || SPACE_ID_AGENT_ID_REGISTRY;
   try {
-    const body = await request.json() as any;
-    const { walletAddress, message, signature } = body;
-
-    if (!walletAddress || !/^0x[a-fA-F0-9]{40}$/.test(walletAddress)) {
-      return errorResponse('Valid BSC wallet address required');
-    }
-
-    // Official Binance Agentic Wallet verification:
-    // When an Agentic Wallet connects and verifies its eligibility challenge:
-    const cleanWallet = walletAddress.toLowerCase();
-    const nonce = '0x' + Array.from(crypto.getRandomValues(new Uint8Array(32)))
-      .map(b => b.toString(16).padStart(2, '0')).join('');
-    const deadline = Math.floor(Date.now() / 1000) + 3600; // 1 hour validity
-
-    // Record wallet in database if D1 is available
-    const db = getDB(env);
-    if (db) {
-      await db.prepare(`
-        INSERT OR REPLACE INTO wallets (id, address, is_agentic_wallet, agentic_verified_at)
-        VALUES (?, ?, 1, CURRENT_TIMESTAMP)
-      `).bind(`w_${cleanWallet}`, cleanWallet).run();
-    }
-
+    const result = await verifyAgentIdOwner(
+      walletAddress,
+      env.BSC_RPC_URL || '',
+      registryAddress
+    );
     return jsonResponse({
       success: true,
-      eligible: true,
-      walletAddress: cleanWallet,
-      nonce,
-      deadline,
-      message: 'Binance Agentic Wallet verified successfully for free mint.'
+      eligible: result.eligible,
+      isEligible: result.eligible,
+      walletAddress: walletAddress.toLowerCase(),
+      handle: result.handle || null,
+      chainId: 56,
+      registry: SPACE_ID_AGENT_ID_REGISTRY
     });
-  } catch (err: any) {
-    return errorResponse(`Agentic verification failed: ${err.message}`, 500);
+  } catch (err) {
+    console.error('[Agent ID verification failed]', err);
+    return errorResponse('Could not verify Agent ID ownership on BNB Mainnet; please retry shortly', 503);
   }
 }
 

@@ -47,7 +47,7 @@
                       |                                        |
                       v Web3 RPC (EIP-1193 / Viem / Wagmi)    v On-chain Read/Write
 +-----------------------------------------------------------------------------------+
-|                       BNB SMART CHAIN (BSC - ChainID 56 / 97)                     |
+|                       BNB SMART CHAIN MAINNET (BSC - ChainID 56)                   |
 |                                                                                   |
 |  +--------------------+   +--------------------+   +---------------------------+  |
 |  |  WeZardsToken.sol  |   |   WeZardsNFT.sol   |   |  WeZardsMarketplace.sol   |  |

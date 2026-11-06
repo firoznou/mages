@@ -1,6 +1,6 @@
 # WeZards Web3 Ecosystem - Production Deployment Guide
 
-This guide details the complete deployment procedure for the **WeZards** Web3 ecosystem on **BNB Smart Chain (BSC)** across testnet (ChainID 97) and mainnet (ChainID 56).
+This guide covers deploying the **WeZards** web3 ecosystem to **BNB Smart Chain Mainnet** (chain ID `56`). The deployment script refuses to run on other chains.
 
 ---
 
@@ -15,8 +15,7 @@ Ensure the following tools are installed:
 Create a `.env` file in the project root:
 ```env
 # Blockchain RPC & Keys
-BSC_RPC_URL=https://bsc-dataseed.binance.org/
-BSC_TESTNET_RPC_URL=https://data-seed-prebsc-1-s1.binance.org:8545/
+BSC_RPC_URL=https://bsc-dataseed.bnbchain.org
 PRIVATE_KEY=your_deployer_private_key_here
 BSCSCAN_API_KEY=your_bscscan_api_key_here
 
@@ -27,12 +26,15 @@ NEXT_PUBLIC_WEZARDS_MARKETPLACE_ADDRESS=
 NEXT_PUBLIC_WEZARDS_REWARD_DISTRIBUTOR_ADDRESS=
 
 # Network
-NEXT_PUBLIC_CHAIN_ID=97 # 97 for testnet, 56 for mainnet
+NEXT_PUBLIC_CHAIN_ID=56
+NEXT_PUBLIC_RPC_URL=https://bsc-dataseed.bnbchain.org
+SPACE_ID_AGENT_ID_REGISTRY=0x60B9262456dE011F7d15a54CdD8c48bAaa8B022F
 
 # Backend & Admin Secrets
 NEXT_PUBLIC_API_URL=https://wezards-api.workers.dev
 ADMIN_INITIAL_USERNAME=wezards_admin
-ADMIN_INITIAL_PASSWORD=your_secure_admin_password
+ADMIN_INITIAL_PASSWORD=use-a-unique-secret
+ADMIN_JWT_SECRET=generate-a-random-secret-at-least-32-characters
 
 # IPFS Pinata
 PINATA_JWT=your_pinata_jwt_token_here
@@ -46,25 +48,45 @@ PINATA_JWT=your_pinata_jwt_token_here
 ```bash
 forge test --root contracts -vvv
 ```
-All 33 unit and integration tests must pass with 0 failures before deployment.
+All unit and integration tests must pass with 0 failures before deployment.
 
-### 2.2 Deploy to BNB Smart Chain Testnet
+### 2.2 Deploy to BNB Smart Chain Mainnet
 ```bash
 forge script contracts/script/DeployWeZards.s.sol:DeployWeZards \
-  --rpc-url $BSC_TESTNET_RPC_URL \
+  --rpc-url $BSC_RPC_URL \
   --broadcast \
   --verify \
   --etherscan-api-key $BSCSCAN_API_KEY \
   -vvvv
 ```
 
-The script will output the deployed contract addresses:
+The script deploys the ecosystem and configures the NFT contract to use the verified SPACE ID Agent ID registry. It outputs the deployed contract addresses:
 - `WeZardsToken`
 - `WeZardsNFT`
 - `WeZardsMarketplace`
-- `WeZardsRewardDistributor`
 
-Record these addresses in `.env` and `frontend/src/lib/web3.ts`.
+Record the NFT and token addresses in `.env` and configure `NEXT_PUBLIC_CHAIN_ID=56` in the frontend build environment. The NFT contract is not upgradeable; existing deployments do not gain this integration from a source change.
+
+### 2.3 Agent ID integration and transaction commands
+
+SPACE ID's [official Agent ID documentation](https://docs.space.id/agent-id) lists `0x60B9262456dE011F7d15a54CdD8c48bAaa8B022F` as the BNB Mainnet registry and defines `handleOf(address)` and `ownerOfHandle(string)`. WeZards checks `handleOf(msg.sender)` on-chain; there is no backend signing key, signature, nonce, or off-chain authorization that can bypass contract eligibility or mint limits.
+
+Read the configured registry and current wallet handle:
+```bash
+cast call "$NEXT_PUBLIC_WEZARDS_NFT_ADDRESS" "agentIdRegistry()(address)" --rpc-url "$BSC_RPC_URL"
+cast call 0x60B9262456dE011F7d15a54CdD8c48bAaa8B022F "handleOf(address)(string)" "$WALLET_ADDRESS" --rpc-url "$BSC_RPC_URL"
+```
+
+For a contract deployed from this version, the registry is set by the deployment script. If separately deploying the NFT contract, its owner can configure it with:
+```bash
+cast send "$NEXT_PUBLIC_WEZARDS_NFT_ADDRESS" "setAgentIdRegistry(address)" 0x60B9262456dE011F7d15a54CdD8c48bAaa8B022F --rpc-url "$BSC_RPC_URL" --private-key "$PRIVATE_KEY"
+```
+
+Wallet-signed mint commands (not executed as part of this implementation):
+```bash
+cast send "$NEXT_PUBLIC_WEZARDS_NFT_ADDRESS" "mintAgenticFree()" --rpc-url "$BSC_RPC_URL" --private-key "$WALLET_PRIVATE_KEY"
+cast send "$NEXT_PUBLIC_WEZARDS_NFT_ADDRESS" "mintPaid(uint256)" 1 --value 0.001ether --rpc-url "$BSC_RPC_URL" --private-key "$WALLET_PRIVATE_KEY"
+```
 
 ---
 
@@ -94,7 +116,7 @@ Upload images and metadata folders to Pinata:
 ```
 Update contract base URI:
 ```bash
-cast send $NEXT_PUBLIC_WEZARDS_NFT_ADDRESS "setBaseURI(string)" "ipfs://QmWeZardsMetadataCID/" --rpc-url $BSC_TESTNET_RPC_URL --private-key $PRIVATE_KEY
+cast send "$NEXT_PUBLIC_WEZARDS_NFT_ADDRESS" "setBaseURI(string)" "ipfs://QmWeZardsMetadataCID/" --rpc-url "$BSC_RPC_URL" --private-key "$PRIVATE_KEY"
 ```
 
 ---
@@ -149,9 +171,8 @@ npx wrangler pages deploy .next --project-name wezards-admin
 
 1. [x] Smart contracts verified on BscScan.
 2. [x] Total supply strictly verified: 21,000,000 WEZ and 5,000 NFTs.
-3. [x] Binance Agentic Wallet verification operational.
+3. [ ] Agent ID free mint verified against the SPACE ID BNB Mainnet registry.
 4. [x] 1-bit pixel art Mages 100% unique and validated.
 5. [x] Public dApp live with zero admin links.
 6. [x] Admin portal authenticated with rate-limited PBKDF2.
 7. [x] Reward distributor pool ready for funded community campaign.
-

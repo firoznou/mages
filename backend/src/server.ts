@@ -9,9 +9,9 @@ import { parse } from 'node:url';
 import crypto from 'node:crypto';
 import { db } from './db.js';
 import { generateNonce, generateSessionToken, parseSiweMessage } from './siwe.js';
+import { verifyAgentIdOwner, SPACE_ID_AGENT_ID_REGISTRY } from './agent_id.js';
 
 const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 4000;
-const AGENTIC_VERIFIER_PRIVATE_KEY = process.env.AGENTIC_SIGNER_KEY || '0x0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef';
 
 // Helper to send JSON responses with CORS & Security headers
 function sendJson(res: http.ServerResponse, statusCode: number, data: unknown) {
@@ -138,31 +138,36 @@ export const server = http.createServer(async (req, res) => {
       });
     }
 
-    // 4. Binance Agentic Wallet Verification Flow
+    // 4. SPACE ID Agent ID Verification
     if (pathname === '/api/agentic/verify' && method === 'GET') {
       const wallet = parsedUrl.query.wallet as string;
       if (!wallet || !/^0x[a-fA-F0-9]{40}$/.test(wallet)) {
         return sendJson(res, 400, { error: 'Valid wallet address required' });
       }
 
-      // Check agentic wallet eligibility
-      // Note: In production this queries the Binance Agentic Wallet registry / oracle
-      const isEligible = true;
-      const nonce = '0x' + crypto.randomBytes(32).toString('hex');
-      const deadline = Math.floor(Date.now() / 1000) + 3600; // 1 hour validity
+      if (Number(process.env.CHAIN_ID || 56) !== 56) {
+        return sendJson(res, 503, { error: 'Agent ID verification is configured for BNB Mainnet only' });
+      }
 
-      // Generate mock cryptographic signature for demonstration/testnet
-      const dummySig = '0x' + 'a'.repeat(130);
-
-      return sendJson(res, 200, {
-        wallet: wallet.toLowerCase(),
-        isEligible,
-        allocation: 1, // 1 free NFT per eligible Agentic wallet
-        nonce,
-        deadline,
-        signature: dummySig,
-        message: 'Binance Agentic Wallet eligibility successfully verified.'
-      });
+      try {
+        const result = await verifyAgentIdOwner(
+          wallet,
+          process.env.BSC_RPC_URL || '',
+          process.env.SPACE_ID_AGENT_ID_REGISTRY || SPACE_ID_AGENT_ID_REGISTRY
+        );
+        return sendJson(res, 200, {
+          success: true,
+          eligible: result.eligible,
+          isEligible: result.eligible,
+          walletAddress: wallet.toLowerCase(),
+          handle: result.handle || null,
+          chainId: 56,
+          registry: SPACE_ID_AGENT_ID_REGISTRY
+        });
+      } catch (err) {
+        console.error('[Agent ID verification failed]', err);
+        return sendJson(res, 503, { error: 'Could not verify Agent ID ownership on BNB Mainnet; please retry shortly' });
+      }
     }
 
     // 5. Presale Status & Chainlink Oracle Information
@@ -312,4 +317,3 @@ if (process.env.NODE_ENV !== 'test') {
     console.log(`WeZards Backend API listening on http://localhost:${PORT}`);
   });
 }
-

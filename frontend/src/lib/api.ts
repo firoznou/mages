@@ -60,11 +60,9 @@ export async function submitRewardCampaign(payload: {
 }
 
 export async function verifyAgenticWallet(walletAddress: string) {
-  const res = await fetch(`${API_BASE}/api/agentic/verify`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ walletAddress })
-  });
+  const url = new URL(`${API_BASE}/api/agentic/verify`);
+  url.searchParams.set('wallet', walletAddress);
+  const res = await fetch(url.toString(), { cache: 'no-store' });
   const data = await res.json();
   if (!res.ok) throw new Error(data.error || 'Agentic verification failed');
   return data;

@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { verifyAgenticWallet } from '../lib/api';
 import { formatAddress } from '../lib/web3';
 
 export default function Navbar() {
@@ -28,37 +29,28 @@ export default function Navbar() {
 
   const checkAgenticEligibility = async (addr: string) => {
     try {
-      const res = await fetch(`/api/agentic/verify?wallet=${addr}`);
-      if (res.ok) {
-        const data = await res.json();
-        setIsAgentic(!!data.isEligible);
-      }
+      const data = await verifyAgenticWallet(addr);
+      setIsAgentic(data.eligible === true);
     } catch {
-      // Default to standard wallet if network fails
+      setIsAgentic(false);
     }
   };
 
-  const connectWallet = async (type: 'binance' | 'injected' | 'agent_simulated') => {
+  const connectWallet = async () => {
     try {
       setIsConnecting(true);
 
-      if (type === 'agent_simulated') {
-        // Direct Binance Agentic Wallet connection simulation
-        const agentWalletAddr = '0x8888888888888888888888888888888888888888';
-        setAddress(agentWalletAddr);
-        setIsAgentic(true);
-        setWalletModalOpen(false);
-        return;
-      }
-
       const provider = (window as any).BinanceChain || (window as any).ethereum;
       if (!provider) {
-        // Fallback demo connection
-        const mockAddr = '0x71C8F3924375b42Eb01D78E079A49A1F30C66567';
-        setAddress(mockAddr);
-        setIsAgentic(type === 'binance');
-        setWalletModalOpen(false);
-        return;
+        throw new Error('No compatible wallet extension was found.');
+      }
+
+      const chainId = await provider.request({ method: 'eth_chainId' });
+      if (BigInt(chainId) !== 56n) {
+        await provider.request({
+          method: 'wallet_switchEthereumChain',
+          params: [{ chainId: '0x38' }]
+        });
       }
 
       const accounts = await provider.request({ method: 'eth_requestAccounts' });
@@ -153,7 +145,7 @@ export default function Navbar() {
                   {isAgentic ? (
                     <span className="flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-full bg-amber-500/20 text-[#F59E0B] border border-amber-500/30">
                       <span className="w-1.5 h-1.5 rounded-full bg-[#F59E0B] animate-pulse"></span>
-                      Agentic Wallet
+                      Agent ID holder
                     </span>
                   ) : (
                     <span className="flex items-center gap-1 text-[11px] font-medium text-emerald-400">
@@ -421,20 +413,12 @@ export default function Navbar() {
                   </p>
                 </div>
 
-                {/* Instant Connect Simulation */}
-                <button
-                  onClick={() => connectWallet('agent_simulated')}
-                  className="w-full py-3.5 rounded-xl font-bold text-xs sm:text-sm text-black bg-[#F59E0B] hover:bg-[#FBBF24] transition shadow-[0_0_20px_rgba(245,158,11,0.3)] flex items-center justify-center gap-2"
-                >
-                  <span>⚡ Instant Pair as Verified Binance Agentic Wallet</span>
-                </button>
-
               </div>
             ) : (
               /* TAB 2: BROWSER EXTENSIONS */
               <div className="space-y-3">
                 <button
-                  onClick={() => connectWallet('binance')}
+                  onClick={connectWallet}
                   className="w-full flex items-center justify-between p-4 rounded-2xl bg-[#090514] border border-[#2E1B4E] hover:border-[#F59E0B] transition-all group"
                 >
                   <div className="flex items-center gap-3">
@@ -444,16 +428,16 @@ export default function Navbar() {
                     <div className="text-left">
                       <div className="font-semibold text-white group-hover:text-[#F59E0B] flex items-center gap-2">
                         Binance Wallet Extension
-                        <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-500/20 text-[#F59E0B] font-bold">Agentic Ready</span>
+                        <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-500/20 text-[#F59E0B] font-bold">Agent ID Check</span>
                       </div>
-                      <div className="text-xs text-gray-400">Direct verification for 2,500 free NFTs</div>
+                      <div className="text-xs text-gray-400">Free mint eligibility requires a registered Agent ID</div>
                     </div>
                   </div>
                   <span className="text-gray-500 group-hover:text-white">→</span>
                 </button>
 
                 <button
-                  onClick={() => connectWallet('injected')}
+                  onClick={connectWallet}
                   className="w-full flex items-center justify-between p-4 rounded-2xl bg-[#090514] border border-[#2E1B4E] hover:border-[#9333EA] transition-all group"
                 >
                   <div className="flex items-center gap-3">

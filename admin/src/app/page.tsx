@@ -260,7 +260,7 @@ export default function AdminPage() {
 
           <div className="flex items-center gap-3 text-xs">
             <span className="px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 font-semibold">
-              Chain: BSC Testnet (97)
+              Chain: BNB Smart Chain Mainnet (56)
             </span>
             <span className="px-3 py-1 rounded-full bg-purple-500/20 text-purple-300 border border-purple-500/30 font-semibold">
               D1 Database Connected
@@ -646,4 +646,3 @@ export default function AdminPage() {
     </div>
   );
 }
-

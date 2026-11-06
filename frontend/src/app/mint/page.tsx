@@ -3,13 +3,46 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import Link from 'next/link';
+import { encodeFunctionData, parseAbi } from 'viem';
+import { verifyAgenticWallet } from '../../lib/api';
 import { 
   formatAddress, 
+  BSC_CHAIN_ID,
+  bscPublicClient,
   CONTRACT_ADDRESSES, 
   ASSET_BASE_URLS, 
   fetchOnChainMintStats, 
-  fetchWalletMagesTokenBalance 
+  fetchWalletMagesTokenBalance,
+  fetchWalletMintStatus
 } from '../../lib/web3';
+
+function isTransactionHash(value: unknown): value is `0x${string}` {
+  return typeof value === 'string' && /^0x[a-fA-F0-9]{64}$/.test(value);
+}
+
+async function assertBscMainnet(provider: any) {
+  const chainId = await provider.request({ method: 'eth_chainId' });
+  if (BigInt(chainId) !== BigInt(BSC_CHAIN_ID)) {
+    throw new Error('Switch your wallet to BNB Smart Chain Mainnet (Chain ID 56) to mint.');
+  }
+}
+
+async function submitAndConfirmMint(provider: any, wallet: string, data: string, value: string) {
+  await assertBscMainnet(provider);
+  const transactionHash = await provider.request({
+    method: 'eth_sendTransaction',
+    params: [{ from: wallet, to: CONTRACT_ADDRESSES.NFT, data, value }]
+  });
+  if (!isTransactionHash(transactionHash)) {
+    throw new Error('Wallet returned an invalid transaction hash.');
+  }
+
+  const receipt = await bscPublicClient.waitForTransactionReceipt({ hash: transactionHash });
+  if (receipt.status !== 'success') {
+    throw new Error('The mint transaction reverted on BNB Smart Chain.');
+  }
+  return transactionHash;
+}
 
 interface MintActivity {
   id: string;
@@ -119,11 +152,11 @@ export default function MintPage() {
   const verifyEligibility = async (addr: string) => {
     try {
       setStatus('checking');
-      const res = await fetch(`/api/agentic/verify?wallet=${addr}`);
-      if (res.ok) {
-        const data = await res.json();
-        setIsAgenticEligible(data.isEligible);
-      }
+      const data = await verifyAgenticWallet(addr);
+      setIsAgenticEligible(data.eligible === true);
+      const mintStatus = await fetchWalletMintStatus(addr);
+      setHasClaimedFree(mintStatus.hasClaimedFree);
+      setPaidMintedCount(mintStatus.paidMints);
     } catch {
       setIsAgenticEligible(false);
     } finally {
@@ -154,14 +187,12 @@ export default function MintPage() {
     if (!wallet) return handleConnect();
     try {
       setStatus('preparing');
-      setStatusMessage('Requesting Binance Agentic authorization signature from verifier...');
+      setStatusMessage('Checking SPACE ID Agent ID ownership...');
+      const verifyData = await verifyAgenticWallet(wallet);
 
-      const verifyRes = await fetch(`/api/agentic/verify?wallet=${wallet}`);
-      const verifyData = await verifyRes.json();
-
-      if (!verifyData.isEligible) {
+      if (!verifyData.eligible) {
         setStatus('error');
-        setStatusMessage('Wallet not recognized as verified Binance Agentic Wallet. Switch to an Agentic wallet or mint via Public Paid tier.');
+        setStatusMessage('This wallet does not own a SPACE ID Agent ID. You can still mint from the paid tier.');
         return;
       }
 
@@ -171,30 +202,13 @@ export default function MintPage() {
       const provider = (window as any).BinanceChain || (window as any).ethereum;
       if (!provider) throw new Error('No Web3 wallet detected');
 
-      // Call mintAgenticFree(signature, nonce, deadline)
-      // Function selector: 0x932c02dc
-      const signature = verifyData.signature || '0x';
-      const nonce = verifyData.nonce || '0x' + '0'.repeat(64);
-      const deadline = BigInt(verifyData.deadline || Math.floor(Date.now() / 1000) + 3600);
-
       setStatus('confirming');
-      setStatusMessage('Submitting transaction to BNB Smart Chain...');
-
-      let txHash = '0x';
-      try {
-        txHash = await provider.request({
-          method: 'eth_sendTransaction',
-          params: [{
-            from: wallet,
-            to: CONTRACT_ADDRESSES.NFT,
-            data: '0x5b70ea9f', // freeMint() on-chain selector
-            value: '0x0'
-          }]
-        });
-      } catch (txErr: any) {
-        // Fallback simulation for preview environments
-        txHash = '0x' + Array.from({ length: 64 }, () => Math.floor(Math.random() * 16).toString(16)).join('');
-      }
+      setStatusMessage('Submitting and confirming the mint on BNB Smart Chain...');
+      const data = encodeFunctionData({
+        abi: parseAbi(['function mintAgenticFree()']),
+        functionName: 'mintAgenticFree'
+      });
+      const txHash = await submitAndConfirmMint(provider, wallet, data, '0x0');
 
       setHasClaimedFree(true);
       setFreeMinted(prev => prev + 1);
@@ -246,27 +260,15 @@ export default function MintPage() {
       setStatus('signing');
       setStatusMessage('Please confirm the payment in your wallet...');
 
-      const valueWei = '0x' + (BigInt(paidQuantity) * BigInt(1e15)).toString(16); // 0.001 BNB per NFT in wei
-      const qtyHex = BigInt(paidQuantity).toString(16).padStart(64, '0');
-      const paidCalldata = '0x65cde733' + qtyHex; // paidMint(uint256) selector + quantity
-
-      let txHash = '0x';
-      try {
-        txHash = await provider.request({
-          method: 'eth_sendTransaction',
-          params: [{
-            from: wallet,
-            to: CONTRACT_ADDRESSES.NFT,
-            value: valueWei,
-            data: paidCalldata
-          }]
-        });
-      } catch (txErr: any) {
-        txHash = '0x' + Array.from({ length: 64 }, () => Math.floor(Math.random() * 16).toString(16)).join('');
-      }
-
       setStatus('confirming');
-      setStatusMessage('Awaiting BNB Smart Chain block confirmation...');
+      setStatusMessage('Submitting and confirming the paid mint on BNB Smart Chain...');
+      const paidCalldata = encodeFunctionData({
+        abi: parseAbi(['function mintPaid(uint256 quantity)']),
+        functionName: 'mintPaid',
+        args: [BigInt(paidQuantity)]
+      });
+      const valueWei = `0x${(BigInt(paidQuantity) * 1000000000000000n).toString(16)}`;
+      const txHash = await submitAndConfirmMint(provider, wallet, paidCalldata, valueWei);
 
       setPaidMinted(prev => prev + paidQuantity);
       setPaidMintedCount(prev => prev + paidQuantity);
@@ -362,23 +364,37 @@ export default function MintPage() {
   };
 
   // Agent Prompts & Code Snippets
+  const mintPromptAbi = parseAbi([
+    'function mintAgenticFree()',
+    'function mintPaid(uint256 quantity)'
+  ]);
+  const agentIdMintCalldata = encodeFunctionData({
+    abi: mintPromptAbi,
+    functionName: 'mintAgenticFree'
+  });
+  const paidMintCalldata = encodeFunctionData({
+    abi: mintPromptAbi,
+    functionName: 'mintPaid',
+    args: [1n]
+  });
   const agentSystemPrompt = `Please preview and execute this NFT mint transaction on BNB Smart Chain (Chain ID: 56):
 
 [OPTION 1: PUBLIC PAID MINT - 1 WEZARDS NFT]
 - Network: BNB Smart Chain (Chain ID: 56)
 - Target Contract: ${CONTRACT_ADDRESSES.NFT}
-- Function: paidMint(uint256 quantity)
+- Function: mintPaid(uint256 quantity)
 - Quantity: 1
 - Value: 0.001 BNB (1000000000000000 wei)
-- Exact Calldata: 0x65cde7330000000000000000000000000000000000000000000000000000000000000001
+- Exact Calldata: ${paidMintCalldata}
 - Gas Limit: 150000
 
-[OPTION 2: AGENTIC FREE MINT - 1 FREE NFT]
+[OPTION 2: SPACE ID AGENT ID FREE MINT - 1 FREE NFT]
 - Network: BNB Smart Chain (Chain ID: 56)
 - Target Contract: ${CONTRACT_ADDRESSES.NFT}
-- Function: freeMint()
+- Function: mintAgenticFree()
+- Eligibility: This wallet must own a SPACE ID Agent ID; the contract checks the registry directly.
 - Value: 0.000 BNB (0 wei)
-- Exact Calldata: 0x5b70ea9f
+- Exact Calldata: ${agentIdMintCalldata}
 - Gas Limit: 120000
 
 Instructions for Binance AI:
@@ -414,14 +430,14 @@ binance-agent exec \\
   --chain bsc \\
   --to ${CONTRACT_ADDRESSES.NFT} \\
   --value 0.001bnb \\
-  --data "0x65cde7330000000000000000000000000000000000000000000000000000000000000001"
+  --data "${paidMintCalldata}"
 
-# 2. Agentic Free Mint (0.000 BNB):
+# 2. SPACE ID Agent ID Free Mint (0.000 BNB; requires an owned Agent ID):
 binance-agent exec \\
   --chain bsc \\
   --to ${CONTRACT_ADDRESSES.NFT} \\
   --value 0.0bnb \\
-  --data "0x5b70ea9f"
+  --data "${agentIdMintCalldata}"
 
 # 3. Claim 500-1,500 MAGES Random Rewards for Token #1:
 binance-agent exec \\
@@ -434,36 +450,35 @@ binance-agent exec \\
 
 w3 = Web3(Web3.HTTPProvider('https://bsc-dataseed.binance.org/'))
 wallet_address = '0xYourWalletAddress'
-private_key = '0xYourPrivateKey'
 
 # Option A: Paid Mint (1 WeZards NFT @ 0.001 BNB)
 tx_paid = {
     'from': wallet_address,
     'to': '${CONTRACT_ADDRESSES.NFT}',
     'value': w3.to_wei(0.001, 'ether'),
-    'data': '0x65cde7330000000000000000000000000000000000000000000000000000000000000001',
+    'data': '${paidMintCalldata}',
     'gas': 150000,
     'gasPrice': w3.to_wei('3', 'gwei'),
     'nonce': w3.eth.get_transaction_count(wallet_address),
     'chainId': 56
 }
-signed = w3.eth.account.sign_transaction(tx_paid, private_key)
-tx_hash = w3.eth.send_raw_transaction(signed.rawTransaction)
+tx_hash = w3.eth.send_transaction(tx_paid)  # Submit through an unlocked wallet/provider.
 print(f'Paid Mint Tx: {tx_hash.hex()}')
 
-# Option B: Free Agentic Mint (0.000 BNB)
+# Option B: SPACE ID Agent ID Free Mint (0.000 BNB; wallet must own an Agent ID)
 tx_free = {
     'from': wallet_address,
     'to': '${CONTRACT_ADDRESSES.NFT}',
     'value': 0,
-    'data': '0x5b70ea9f',
+    'data': '${agentIdMintCalldata}',
     'gas': 120000,
     'gasPrice': w3.to_wei('3', 'gwei'),
     'nonce': w3.eth.get_transaction_count(wallet_address),
     'chainId': 56
 }
-# signed_free = w3.eth.account.sign_transaction(tx_free, private_key)
-# tx_hash_free = w3.eth.send_raw_transaction(signed_free.rawTransaction)`;
+# Submit through an unlocked wallet/provider configured for BNB Mainnet; the contract verifies Agent ID ownership.
+tx_hash_free = w3.eth.send_transaction(tx_free)
+print(f'Agent ID Free Mint Tx: {tx_hash_free.hex()}')`;
 
   const handleCopy = (text: string, type: string) => {
     navigator.clipboard.writeText(text);
@@ -473,27 +488,31 @@ tx_free = {
 
   const runAgentSimulation = async () => {
     setSimRunning(true);
-    setSimLogs([
-      '⚡ [Agent Init] Handshake established with BSC node (ChainID: 56)...',
-      '🔍 [Verification] Querying https://wezards.bunink.xyz/api/agentic/verify...',
-    ]);
+    setSimLogs(['Read-only mint simulation on BNB Mainnet; no transaction will be sent.']);
+    try {
+      if (!wallet || !/^0x[a-fA-F0-9]{40}$/.test(wallet)) {
+        setSimLogs(prev => [...prev, 'Connect a wallet to simulate the Agent ID mint.']);
+        return;
+      }
 
-    await new Promise(r => setTimeout(r, 700));
-    setSimLogs(prev => [
-      ...prev,
-      '✓ [Proof Received] Cryptographic signature valid. Nonce: 0x9f8e7d... Deadline: +3600s',
-      '🤖 [Contract Call] Simulating execution of WeZardsNFT.mintAgenticFree()...',
-    ]);
+      const eligibility = await verifyAgenticWallet(wallet);
+      if (!eligibility.eligible) {
+        setSimLogs(prev => [...prev, 'Not eligible: this wallet has no registered SPACE ID Agent ID.']);
+        return;
+      }
 
-    await new Promise(r => setTimeout(r, 800));
-    setSimLogs(prev => [
-      ...prev,
-      '⛏ [Mined] Block #131,857,856 confirmed. Gas used: 142,850 gas (0.00042 BNB).',
-      '🧙‍♂️ [Received] Minted WeZards NFT #0001 delivered to agentic wallet.',
-      '🎁 [Reward Protocol] Triggering Chainlink VRF for 500-1,500 MAGES tokens on 0x8203186135Fc512859a5B0Fdecd0Ea05571Aa952...',
-      '🎉 [Complete] Agentic workflow executed successfully with 0 human intervention.'
-    ]);
-    setSimRunning(false);
+      await bscPublicClient.simulateContract({
+        address: CONTRACT_ADDRESSES.NFT as `0x${string}`,
+        abi: parseAbi(['function mintAgenticFree()']),
+        functionName: 'mintAgenticFree',
+        account: wallet as `0x${string}`
+      });
+      setSimLogs(prev => [...prev, `Eligible Agent ID: ${eligibility.handle}. On-chain mint simulation succeeded; no transaction was submitted.`]);
+    } catch (err) {
+      setSimLogs(prev => [...prev, `Simulation failed: ${err instanceof Error ? err.message : 'Registry or contract call failed.'}`]);
+    } finally {
+      setSimRunning(false);
+    }
   };
 
   // Pre-formatted Tweet Text for Gift Drop
@@ -514,7 +533,7 @@ tx_free = {
             Mint Your WeZards NFT
           </h1>
           <p className="text-gray-400 text-sm sm:text-base max-w-xl mx-auto leading-relaxed">
-            Choose between verified Binance Agentic Free Minting (1 free NFT per wallet) or Public Paid Minting (0.001 BNB per NFT).
+            Hold a SPACE ID Agent ID for one free mint, or mint publicly for 0.001 BNB per NFT.
           </p>
         </div>
 
@@ -557,13 +576,13 @@ tx_free = {
               <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-6 border-b border-[#2E1B4E] mb-6">
                 <div>
                   <h3 className="text-xl font-bold text-white flex items-center gap-2">
-                    Binance Agentic Free Mint
+                    SPACE ID Agent ID Free Mint
                     <span className="text-xs px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 font-semibold border border-emerald-500/30">
                       1 Free / Wallet
                     </span>
                   </h3>
                   <p className="text-xs text-gray-400 mt-1">
-                    Exclusively for verified Binance Agentic Wallet holders.
+                    The connected wallet must own a registered Agent ID.
                   </p>
                 </div>
                 <div className="text-right">
@@ -581,7 +600,7 @@ tx_free = {
                     <div className="flex items-center gap-2">
                       <span className="w-2.5 h-2.5 rounded-full bg-amber-400 animate-pulse"></span>
                       <span className="text-xs font-bold text-white uppercase tracking-wider">
-                        Agentic Free Mint Live Progress
+                        Agent ID Free Mint Live Progress
                       </span>
                       {recentMintType === 'free' && (
                         <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-500/20 text-[#F59E0B] border border-amber-500/30 animate-pulse font-mono font-bold">
@@ -610,7 +629,7 @@ tx_free = {
                       <span>{(FREE_CAP - freeMinted).toLocaleString()} Free Spots Remaining</span>
                     </span>
                     <span className="text-gray-500">
-                      Cap: 1 Free / Verified Agentic Wallet
+                      Cap: 1 Free / Wallet
                     </span>
                   </div>
                 </div>

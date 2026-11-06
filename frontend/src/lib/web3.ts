@@ -3,11 +3,10 @@ import { bsc } from 'viem/chains';
 
 /**
  * WeZards Web3 & Contract Integration Library
- * Supports BNB Smart Chain (BSC Testnet 97 / Mainnet 56) with Viem & Wagmi integration.
+ * Supports BNB Smart Chain Mainnet with Viem & Wagmi integration.
  */
 
 export const BSC_CHAIN_ID = 56;
-export const BSC_TESTNET_CHAIN_ID = 97;
 
 export const ASSET_BASE_URLS = {
   IMAGES: 'https://assets.bunink.xyz/images',
@@ -24,7 +23,7 @@ export const bscPublicClient = createPublicClient({
 });
 
 export const CONTRACT_ADDRESSES = {
-  NFT: process.env.NEXT_PUBLIC_WEZARDS_NFT_ADDRESS || '0x5D0EAF09Cf125FeE23f0faA093E2Ac79034fe08c',
+  NFT: process.env.NEXT_PUBLIC_WEZARDS_NFT_ADDRESS || '0xe4d7Ec33Fcf7D93cBE7F4D46d0ef35F437956aab',
   TOKEN: process.env.NEXT_PUBLIC_MAGES_TOKEN_ADDRESS || '0x8203186135Fc512859a5B0Fdecd0Ea05571Aa952',
   PRESALE: process.env.NEXT_PUBLIC_WEZARDS_PRESALE_ADDRESS || '0x3333333333333333333333333333333333333333',
   AIRDROP: process.env.NEXT_PUBLIC_WEZARDS_AIRDROP_ADDRESS || '0x4444444444444444444444444444444444444444',
@@ -45,11 +44,13 @@ export const WEZARDS_NFT_ABI = [
   'function PAID_ALLOCATION_LIMIT() view returns (uint256)',
   'function TEAM_FREE_MINT_LIMIT() view returns (uint256)',
   'function mintPrice() view returns (uint256)',
+  'function agentIdRegistry() view returns (address)',
+  'function setAgentIdRegistry(address newRegistry) external',
   'function isRevealed() view returns (bool)',
   'function isPaidMint(uint256) view returns (bool)',
   'function hasClaimedFreeMint(address) view returns (bool)',
   'function paidMintsPerWallet(address) view returns (uint256)',
-  'function mintAgenticFree(bytes calldata signature, bytes32 nonce, uint256 deadline) external',
+  'function mintAgenticFree() external',
   'function mintPaid(uint256 quantity) external payable',
   'function tokenURI(uint256 tokenId) view returns (string)',
   'function ownerOf(uint256 tokenId) view returns (address)',
@@ -153,6 +154,28 @@ export function formatMAGES(wei: bigint | string | number): string {
 export function getWalletProvider(): any {
   if (typeof window === 'undefined') return null;
   return (window as any).BinanceChain || (window as any).ethereum || null;
+}
+
+export async function fetchWalletMintStatus(address: string) {
+  const abi = parseAbi([
+    'function hasClaimedFreeMint(address) view returns (bool)',
+    'function paidMintsPerWallet(address) view returns (uint256)'
+  ]);
+  const [hasClaimedFree, paidMints] = await Promise.all([
+    bscPublicClient.readContract({
+      address: CONTRACT_ADDRESSES.NFT as `0x${string}`,
+      abi,
+      functionName: 'hasClaimedFreeMint',
+      args: [address as `0x${string}`]
+    }),
+    bscPublicClient.readContract({
+      address: CONTRACT_ADDRESSES.NFT as `0x${string}`,
+      abi,
+      functionName: 'paidMintsPerWallet',
+      args: [address as `0x${string}`]
+    })
+  ]);
+  return { hasClaimedFree, paidMints: Number(paidMints) };
 }
 
 export async function fetchOnChainMintStats() {

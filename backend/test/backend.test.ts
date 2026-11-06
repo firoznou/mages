@@ -3,6 +3,9 @@ import { selectVerifiableWinners } from '../src/winner_selector.ts';
 import type { CandidateEntry } from '../src/winner_selector.ts';
 import { generateNonce, createSiweMessage, parseSiweMessage } from '../src/siwe.ts';
 import { db } from '../src/db.ts';
+import { handleAgenticVerify, type Env } from '../src/handlers.ts';
+import { encodeFunctionResult, parseAbi } from 'viem';
+import { SPACE_ID_AGENT_ID_REGISTRY } from '../src/agent_id.ts';
 
 async function runBackendTests() {
   console.log('--- Running Backend & D1 Logic Tests ---');
@@ -85,6 +88,77 @@ async function runBackendTests() {
     throw new Error('Test 5 Failed: DB session validation failed');
   }
   console.log('[Test 5 PASS] DB user and session management passed!');
+
+  const registryAbi = parseAbi([
+    'function handleOf(address owner) view returns (string)'
+  ]);
+  const agentIdWallet = '0x0000000000000000000000000000000000001234';
+  const env: Env = {
+    ENVIRONMENT: 'test',
+    CHAIN_ID: 56,
+    MAX_WINNERS_TARGET: 1000,
+    BNB_PRICE_USD_SNAPSHOT: 600,
+    BSC_RPC_URL: 'https://rpc.test.invalid',
+    SPACE_ID_AGENT_ID_REGISTRY
+  };
+
+  async function verifyWithRegistry(handle: string, chainId = '0x38') {
+    const originalFetch = globalThis.fetch;
+    globalThis.fetch = async (_input, init) => {
+      const request = JSON.parse(String(init?.body)) as { id: number; method: string };
+      const result = request.method === 'eth_chainId'
+        ? chainId
+        : encodeFunctionResult({
+            abi: registryAbi,
+            functionName: 'handleOf',
+            result: handle
+          });
+      return new Response(JSON.stringify({
+        jsonrpc: '2.0',
+        id: request.id,
+        result
+      }), { headers: { 'Content-Type': 'application/json' } });
+    };
+
+    try {
+      return await handleAgenticVerify(
+        new Request(`https://api.test/api/agentic/verify?wallet=${agentIdWallet}`),
+        env
+      );
+    } finally {
+      globalThis.fetch = originalFetch;
+    }
+  }
+
+  const verifiedResponse = await verifyWithRegistry('registered-agent');
+  const verifiedResult = await verifiedResponse.json() as { eligible: boolean; handle: string; signature?: string };
+  if (verifiedResponse.status !== 200 || !verifiedResult.eligible ||
+      verifiedResult.handle !== 'registered-agent' || 'signature' in verifiedResult) {
+    throw new Error('Test 6 Failed: Agent ID owner should be verified from registry without a signature');
+  }
+  console.log('[Test 6 PASS] Agent ID owner verified against on-chain registry');
+
+  const unverifiedResponse = await verifyWithRegistry('');
+  const unverifiedResult = await unverifiedResponse.json() as { eligible: boolean; handle: string | null };
+  if (unverifiedResponse.status !== 200 || unverifiedResult.eligible || unverifiedResult.handle !== null) {
+    throw new Error('Test 7 Failed: Wallet without an Agent ID must not be eligible');
+  }
+  console.log('[Test 7 PASS] Wallet without Agent ID is ineligible');
+
+  const wrongChainResponse = await verifyWithRegistry('registered-agent', '0x61');
+  if (wrongChainResponse.status !== 503) {
+    throw new Error('Test 8 Failed: Registry verification must reject a non-mainnet RPC');
+  }
+  console.log('[Test 8 PASS] Agent ID verification rejects non-mainnet RPC');
+
+  const invalidWalletResponse = await handleAgenticVerify(
+    new Request('https://api.test/api/agentic/verify?wallet=not-an-address'),
+    env
+  );
+  if (invalidWalletResponse.status !== 400) {
+    throw new Error('Test 9 Failed: Invalid wallet address must be rejected');
+  }
+  console.log('[Test 9 PASS] Invalid wallet address is rejected');
 
   console.log('--------------------------------------------------');
   console.log('All Backend Logic Unit Tests PASSED Successfully!');

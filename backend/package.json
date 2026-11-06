@@ -8,5 +8,7 @@
     "deploy": "wrangler deploy",
     "d1:migrate": "wrangler d1 migrations apply wezards_db --local"
   },
-  "dependencies": {}
+  "dependencies": {
+    "viem": "^2.17.0"
+  }
 }

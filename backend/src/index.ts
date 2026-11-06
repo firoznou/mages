@@ -89,7 +89,7 @@ export default {
         return await handleCampaignSubmit(request, env);
       }
 
-      if (method === 'POST' && url.pathname === '/api/agentic/verify') {
+      if ((method === 'GET' || method === 'POST') && url.pathname === '/api/agentic/verify') {
         return await handleAgenticVerify(request, env);
       }
 
