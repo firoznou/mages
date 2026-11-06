@@ -13,7 +13,9 @@ import {
   ASSET_BASE_URLS, 
   fetchOnChainMintStats, 
   fetchWalletMagesTokenBalance,
-  fetchWalletMintStatus
+  fetchWalletMintStatus,
+  fetchLiveMintActivities,
+  MintActivity
 } from '../../lib/web3';
 
 function isTransactionHash(value: unknown): value is `0x${string}` {
@@ -42,18 +44,6 @@ async function submitAndConfirmMint(provider: any, wallet: string, data: string,
     throw new Error('The mint transaction reverted on BNB Smart Chain.');
   }
   return transactionHash;
-}
-
-interface MintActivity {
-  id: string;
-  tokenId: number;
-  name: string;
-  mintee: string;
-  type: 'Agentic Free' | 'Paid Mint' | 'MAGES Reward';
-  price: string;
-  txHash: string;
-  timeAgo: string;
-  blockNumber: number;
 }
 
 export default function MintPage() {
@@ -97,6 +87,7 @@ export default function MintPage() {
 
   // Real On-Chain Activities List
   const [activities, setActivities] = useState<MintActivity[]>([]);
+  const [loadingActivities, setLoadingActivities] = useState<boolean>(true);
 
   // Minting Gift Submission States
   const [giftTweetUrl, setGiftTweetUrl] = useState<string>('');
@@ -112,6 +103,24 @@ export default function MintPage() {
   const mintPriceBNB = 0.001;
   const allowedPaidMax = hasClaimedFree ? 9 : 10;
 
+  const loadActivities = async () => {
+    try {
+      const list = await fetchLiveMintActivities(30);
+      if (list && list.length > 0) {
+        setActivities(prev => {
+          const sessionOnly = prev.filter(p => p.id.startsWith('tx_session_'));
+          const existingTokenIds = new Set(sessionOnly.map(s => s.tokenId));
+          const fresh = list.filter(l => !existingTokenIds.has(l.tokenId));
+          return [...sessionOnly, ...fresh];
+        });
+      }
+    } catch (err) {
+      console.error('Failed to load live activities:', err);
+    } finally {
+      setLoadingActivities(false);
+    }
+  };
+
   // Load real on-chain stats from BSC
   useEffect(() => {
     setMounted(true);
@@ -126,7 +135,15 @@ export default function MintPage() {
         console.error('Failed to fetch on-chain stats:', err);
       }
     }
+
     loadStats();
+    loadActivities();
+
+    // Auto-refresh stats and live activity feed every 8 seconds
+    const interval = setInterval(() => {
+      loadStats();
+      loadActivities();
+    }, 8000);
 
     // Check connected provider
     if (typeof window !== 'undefined' && ((window as any).BinanceChain || (window as any).ethereum)) {
@@ -139,6 +156,8 @@ export default function MintPage() {
         }
       }).catch(() => {});
     }
+
+    return () => clearInterval(interval);
   }, []);
 
   const loadUserMages = async (addr: string) => {
@@ -229,7 +248,7 @@ export default function MintPage() {
 
       // Add to live activities
       setActivities(prev => [{
-        id: `tx_${Date.now()}`,
+        id: `tx_session_${Date.now()}`,
         tokenId: newTokenId,
         name: mintedItem.name,
         mintee: wallet,
@@ -289,7 +308,7 @@ export default function MintPage() {
 
       // Add to live activities
       setActivities(prev => [{
-        id: `tx_${Date.now()}`,
+        id: `tx_session_${Date.now()}`,
         tokenId: firstNewId,
         name: mintedItem.name,
         mintee: wallet,
@@ -908,7 +927,7 @@ print(f'Step 3 MAGES Token Claim broadcasted: {tx_hash_claim.hex()}')`;
         <section className="mb-14 p-6 sm:p-8 rounded-3xl bg-[#160D27] border border-[#2E1B4E] shadow-2xl">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-5 border-b border-[#2E1B4E] mb-6">
             <div>
-              <div className="flex items-center gap-2 mb-1">
+              <div className="flex flex-wrap items-center gap-2 mb-1">
                 <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
                 <span className="text-xs font-bold text-emerald-400 uppercase tracking-wider font-mono">
                   Live On-Chain Data Activities
@@ -916,9 +935,13 @@ print(f'Step 3 MAGES Token Claim broadcasted: {tx_hash_claim.hex()}')`;
                 <span className="text-[11px] font-mono px-2 py-0.5 rounded-full bg-purple-500/10 text-purple-300 border border-purple-500/20">
                   BSC Block #{blockHeight.toLocaleString()}
                 </span>
+                <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-300 border border-emerald-500/20 flex items-center gap-1">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+                  Live Stream ({activities.length} Mints)
+                </span>
               </div>
               <h3 className="text-xl font-black text-white tracking-tight">
-                Real-Time BNB Smart Chain Mint & Claim Stream
+                Real-Time BNB Smart Chain Mint &amp; Claim Stream
               </h3>
             </div>
             <a
@@ -932,7 +955,17 @@ print(f'Step 3 MAGES Token Claim broadcasted: {tx_hash_claim.hex()}')`;
             </a>
           </div>
 
-          {activities.length === 0 ? (
+          {loadingActivities && activities.length === 0 ? (
+            <div className="py-12 text-center text-gray-400 font-mono text-xs">
+              <div className="w-8 h-8 border-2 border-emerald-400 border-t-transparent rounded-full animate-spin mx-auto mb-3"></div>
+              <p className="text-gray-300 font-medium mb-1">
+                Fetching Real-Time On-Chain Activities (ChainID: 56)...
+              </p>
+              <p className="text-gray-500 text-[11px]">
+                Syncing latest mint events from BNB Smart Chain.
+              </p>
+            </div>
+          ) : activities.length === 0 ? (
             <div className="py-10 text-center text-gray-400 font-mono text-xs">
               <div className="w-10 h-10 rounded-full bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 mx-auto mb-3">
                 ✓
@@ -973,12 +1006,13 @@ print(f'Step 3 MAGES Token Claim broadcasted: {tx_hash_claim.hex()}')`;
 
                   <div className="text-right">
                     <a
-                      href={`https://bscscan.com/tx/${act.txHash}`}
+                      href={act.txHash.startsWith('http') ? act.txHash : `https://bscscan.com/tx/${act.txHash}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-[#F59E0B] hover:underline text-[11px]"
+                      className="text-[#F59E0B] hover:underline text-[11px] inline-flex items-center gap-1"
                     >
-                      {formatAddress(act.txHash)} ↗
+                      <span>{act.txHash.startsWith('http') ? `Token #${act.tokenId}` : formatAddress(act.txHash)}</span>
+                      <span>↗</span>
                     </a>
                     <div className="text-[10px] text-gray-500">{act.timeAgo}</div>
                   </div>
