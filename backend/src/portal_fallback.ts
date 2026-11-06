@@ -151,7 +151,7 @@ export function renderPortalFallback(pathname: string): Response {
         <ol class="list-decimal pl-4 space-y-1.5 text-gray-400">
           <li>Follow <a href="https://x.com/nfthunter_wp" target="_blank" class="text-amber-400 font-bold hover:underline">@nfthunter_wp</a> on X (Twitter).</li>
           <li>Like & retweet the pinned post on <a href="https://x.com/nfthunter_wp" target="_blank" class="text-amber-400 font-bold hover:underline">@nfthunter_wp</a>.</li>
-          <li>Post on X mentioning <code class="text-amber-300 bg-[#160D27] px-1.5 py-0.5 rounded font-mono">@nfthunter_wp</code> and hashtags: <code class="text-amber-300 bg-[#160D27] px-1.5 py-0.5 rounded font-mono">#agentID #lfg #wezards</code></li>
+          <li>Post on X mentioning <code class="text-amber-300 bg-[#160D27] px-1.5 py-0.5 rounded font-mono">@nfthunter_wp</code> and hashtags: <code class="text-amber-300 bg-[#160D27] px-1.5 py-0.5 rounded font-mono">#agentID #lfg #wezards $mages</code></li>
           <li>Include our website link: <code class="text-purple-300 bg-[#160D27] px-1.5 py-0.5 rounded font-mono">https://wezards.bunink.xyz/</code></li>
           <li>Enter your BSC wallet address holding tokens below.</li>
           <li>Upload your holding tokens screenshot proof.</li>
@@ -164,7 +164,7 @@ export function renderPortalFallback(pathname: string): Response {
           <a href="https://x.com/nfthunter_wp" target="_blank" class="px-3.5 py-1.5 rounded-xl bg-[#24133D] hover:bg-[#341B55] border border-[#2E1B4E] text-xs text-purple-200 font-bold transition flex items-center gap-1.5">
             Like & Retweet Pinned Post ❤️🔁
           </a>
-          <a href="https://twitter.com/intent/tweet?text=Just%20joined%20the%20%40WeZards%20magical%20Web3%20ecosystem%20with%20%40nfthunter_wp%20on%20BNB%20Smart%20Chain!%20%F0%9F%A7%99%E2%80%8D%E2%99%82%EF%B8%8F%E2%9C%A8%0A%0AMinted%20NFTs%20%26%20holding%20%24MAGES%20tokens%3A%0Ahttps%3A%2F%2Fwezards.bunink.xyz%2F%0A%0A%23agentID%20%23lfg%20%23wezards%20%40nfthunter_wp" target="_blank" class="px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-black text-xs font-bold transition flex items-center gap-1.5">
+          <a href="https://twitter.com/intent/tweet?text=Just%20joined%20the%20%23wezards%20magical%20Web3%20ecosystem%20with%20%40nfthunter_wp%20on%20BNB%20Smart%20Chain!%20%F0%9F%A7%99%E2%80%8D%E2%99%82%EF%B8%8F%E2%9C%A8%0A%0AMinted%20NFTs%20%26%20holding%20%24MAGES%20tokens%3A%0Ahttps%3A%2F%2Fwezards.bunink.xyz%2F%0A%0A%23agentID%20%23lfg%20%23wezards%20%40nfthunter_wp%20%24mages" target="_blank" class="px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-black text-xs font-bold transition flex items-center gap-1.5">
             Post on X (Tweet) 🐦
           </a>
         </div>

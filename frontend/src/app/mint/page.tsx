@@ -552,7 +552,7 @@ print(f'Step 3 MAGES Token Claim broadcasted: {tx_hash_claim.hex()}')`;
   };
 
   // Pre-formatted Tweet Text for Gift Drop
-  const tweetText = `Just joined the @WeZards magical Web3 ecosystem with @nfthunter_wp on BNB Smart Chain! 🧙‍♂️✨\n\nMinted NFTs & holding $MAGES tokens:\nhttps://wezards.bunink.xyz/\n\n#agentID #lfg #wezards @nfthunter_wp`;
+  const tweetText = `Just joined the #wezards magical Web3 ecosystem with @nfthunter_wp on BNB Smart Chain! 🧙‍♂️✨\n\nMinted NFTs & holding $MAGES tokens:\nhttps://wezards.bunink.xyz/\n\n#agentID #lfg #wezards @nfthunter_wp $mages`;
   const tweetIntentUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(tweetText)}`;
 
   return (
@@ -1003,7 +1003,7 @@ print(f'Step 3 MAGES Token Claim broadcasted: {tx_hash_claim.hex()}')`;
                 Share on X &amp; Claim 1$ Bonus Gift
               </h2>
               <p className="text-xs sm:text-sm text-gray-400 mt-1 max-w-2xl leading-relaxed">
-                Follow <a href="https://x.com/nfthunter_wp" target="_blank" rel="noopener noreferrer" className="text-amber-400 font-bold hover:underline">@nfthunter_wp</a> on X, like and retweet the pinned post, and tweet tagging <span className="text-amber-400 font-bold">@nfthunter_wp</span> with <span className="text-[#F59E0B] font-bold">#agentID #lfg #wezards</span> and link <span className="text-[#F59E0B] font-bold">https://wezards.bunink.xyz/</span>. Submit your token holding wallet and screenshot proof to claim!
+                Follow <a href="https://x.com/nfthunter_wp" target="_blank" rel="noopener noreferrer" className="text-amber-400 font-bold hover:underline">@nfthunter_wp</a> on X, like and retweet the pinned post, and tweet tagging <span className="text-amber-400 font-bold">@nfthunter_wp</span> with <span className="text-[#F59E0B] font-bold">#agentID #lfg #wezards $mages</span> and link <span className="text-[#F59E0B] font-bold">https://wezards.bunink.xyz/</span>. Submit your token holding wallet and screenshot proof to claim!
               </p>
             </div>
 
@@ -1072,7 +1072,7 @@ print(f'Step 3 MAGES Token Claim broadcasted: {tx_hash_claim.hex()}')`;
                   <span className="text-xs font-bold text-white uppercase tracking-wider">Post on X (Tweet)</span>
                 </div>
                 <p className="text-[11px] text-gray-400 mb-4 leading-relaxed">
-                  Post on X tagging <span className="text-amber-400 font-semibold">@nfthunter_wp</span> with #agentID #lfg #wezards and website URL.
+                  Post on X tagging <span className="text-amber-400 font-semibold">@nfthunter_wp</span> with #agentID #lfg #wezards $mages and website URL.
                 </p>
               </div>
               <a
@@ -1146,7 +1146,7 @@ print(f'Step 3 MAGES Token Claim broadcasted: {tx_hash_claim.hex()}')`;
                     className="w-full px-4 py-3 rounded-xl bg-[#090514] border border-[#2E1B4E] text-white font-mono text-xs focus:outline-none focus:border-[#F59E0B]"
                   />
                   <div className="text-[10px] text-gray-400 mt-1">
-                    Must include @nfthunter_wp, #agentID #lfg #wezards, and https://wezards.bunink.xyz/
+                    Must include @nfthunter_wp, #agentID #lfg #wezards, $mages, and https://wezards.bunink.xyz/
                   </div>
                 </div>
 
