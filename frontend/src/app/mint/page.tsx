@@ -397,6 +397,10 @@ export default function MintPage() {
     functionName: 'mintPaid',
     args: [1n]
   });
+  const claimFreeCalldata = encodeFunctionData({
+    abi: parseAbi(['function claimFree() external']),
+    functionName: 'claimFree'
+  });
   const agentSystemPrompt = `Please preview and execute this multi-step autonomous Web3 workflow on BNB Smart Chain (Chain ID: 56):
 
 ======================================================================
@@ -426,20 +430,24 @@ STEP 2: REST & CONFIRMATION PERIOD (REST 10-15 SECONDS)
 ======================================================================
 - After Step 1 transaction is broadcasted, rest 10 to 15 seconds (approx. 3-5 BSC blocks).
 - Wait for the transaction receipt on BNB Smart Chain to confirm status: success.
-- Extract the newly minted WeZards NFT Token ID from the Transfer event.
+- Confirm newly minted WeZards NFT ownership.
 
 ======================================================================
-STEP 3: MAGES TOKEN MINTING / CLAIM TRANSACTION
+STEP 3: CLAIM FREE MAGES TOKENS RANDOMLY
 ======================================================================
-After resting 10-15 seconds and confirming NFT mint inclusion, preview and execute the MAGES token reward claim:
+Claim your FREE MAGES tokens! 🧙‍♂️
+
+Connect your wallet holding a WeZards NFT and a Binance/SPACE ID Agent ID, then call \`claimFree()\` on the MAGES contract. No BNB payment required—just pay the network gas fee!
+
+Earn **300–700 MAGES** through a random reward! 🚀
 
 - Network: BNB Smart Chain Mainnet (Chain ID: 56)
 - Target Contract: ${CONTRACT_ADDRESSES.TOKEN} (MAGES Protocol)
-- Function: claimReward(uint256 tokenId)
+- Function: claimFree()
 - Value: 0.000 BNB (0 wei)
-- Exact Calldata: 0xae169a500000000000000000000000000000000000000000000000000000000000000001
+- Exact Calldata: ${claimFreeCalldata}
 - Gas Limit: 180000
-- Reward: Claims 300 to 700 MAGES random reward tokens directly to minter wallet.
+- Reward: Random reward between 300 and 700 MAGES tokens
 
 Instructions for Binance AI / Agent:
 1. Preview Step 1 NFT mint transaction and prompt for user confirmation.
@@ -466,13 +474,15 @@ echo "Resting 15 seconds for BSC block confirmation..."
 sleep 15
 
 # ============================================================
-# STEP 3: MAGES Token Reward Claim Transaction (0.000 BNB)
+# STEP 3: Claim your FREE MAGES tokens! 🧙‍♂️ (0.000 BNB)
 # ============================================================
+# Connect wallet holding WeZards NFT & Agent ID, call claimFree()
+# Earn 300–700 MAGES through a random reward! 🚀
 binance-agent exec \\
   --chain bsc \\
   --to ${CONTRACT_ADDRESSES.TOKEN} \\
   --value 0.0bnb \\
-  --data "0xae169a500000000000000000000000000000000000000000000000000000000000000001"`;
+  --data "${claimFreeCalldata}"`;
 
   const agentPythonSnippet = `import time
 from web3 import Web3
@@ -509,13 +519,16 @@ receipt = w3.eth.wait_for_transaction_receipt(tx_hash_mint)
 print(f'NFT Mint confirmed on-chain in block {receipt.blockNumber}!')
 
 # ============================================================
-# STEP 3: MAGES Token Reward Claiming Transaction
+# STEP 3: Claim your FREE MAGES tokens! 🧙‍♂️ (0.000 BNB + gas)
 # ============================================================
+# Connect your wallet holding a WeZards NFT and a Binance/SPACE ID Agent ID,
+# then call claimFree() on the MAGES contract. No BNB payment required—just pay the network gas fee!
+# Earn 300–700 MAGES through a random reward! 🚀
 tx_claim = {
     'from': wallet_address,
     'to': '${CONTRACT_ADDRESSES.TOKEN}',
     'value': 0,
-    'data': '0xae169a500000000000000000000000000000000000000000000000000000000000000001',
+    'data': '${claimFreeCalldata}', # claimFree()
     'gas': 180000,
     'gasPrice': w3.to_wei('3', 'gwei'),
     'nonce': w3.eth.get_transaction_count(wallet_address),
@@ -731,7 +744,7 @@ print(f'Step 3 MAGES Token Claim broadcasted: {tx_hash_claim.hex()}')`;
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between mt-2.5 text-[11px] font-mono text-gray-400 gap-2">
                     <span className="text-amber-400/90 font-medium flex items-center gap-1">
                       <span>⚡</span>
-                      <span>Every minted NFT qualifies for 1 Chainlink VRF reward (300–700 MAGES)</span>
+                      <span>Claim your FREE MAGES tokens! Earn 300–700 MAGES through a random reward! 🚀</span>
                     </span>
                     <Link
                       href="/rewards"

@@ -470,11 +470,10 @@ export default function RewardsPage() {
             BNB Smart Chain (Chain ID 56) • Official MAGES Claim Portal
           </div>
           <h1 className="text-4xl sm:text-5xl font-black text-white tracking-tight mb-4">
-            MAGES Token Claim Hub
+            Claim your FREE MAGES tokens! 🧙‍♂️
           </h1>
-          <p className="text-gray-400 text-sm sm:text-base leading-relaxed">
-            Claim your randomly awarded <span className="text-[#F59E0B] font-bold">300 to 700 MAGES</span> tokens directly from the deployed MAGES smart contract.
-            Each wallet can claim <span className="text-white font-bold underline decoration-[#F59E0B]">only once</span>.
+          <p className="text-gray-300 text-sm sm:text-base leading-relaxed max-w-2xl mx-auto">
+            Connect your wallet holding a WeZards NFT and a Binance/SPACE ID Agent ID, then call <code className="text-emerald-400 font-mono bg-black/40 px-1.5 py-0.5 rounded border border-emerald-500/20">claimFree()</code> on the MAGES contract. No BNB payment required—just pay the network gas fee! Earn <strong className="text-[#F59E0B]">300–700 MAGES</strong> through a random reward! 🚀
           </p>
         </div>
 
@@ -622,11 +621,15 @@ export default function RewardsPage() {
               </div>
 
               <h2 className="text-2xl sm:text-3xl font-black text-white tracking-tight mb-2">
-                Free MAGES Claim
+                Claim your FREE MAGES tokens! 🧙‍♂️
               </h2>
-              <p className="text-xs sm:text-sm text-gray-400 leading-relaxed mb-5">
-                Eligible wallets holding both a <strong className="text-white">WeZards NFT</strong> and a verified <strong className="text-white">Binance Agent ID</strong> can claim random MAGES at zero cost.
+              <p className="text-xs sm:text-sm text-gray-300 leading-relaxed mb-4">
+                Connect your wallet holding a <strong className="text-white">WeZards NFT</strong> and a <strong className="text-white">Binance/SPACE ID Agent ID</strong>, then call <code className="text-emerald-400 font-mono bg-black/40 px-1.5 py-0.5 rounded border border-emerald-500/20">claimFree()</code> on the MAGES contract. No BNB payment required—just pay the network gas fee!
               </p>
+              <div className="mb-5 text-xs font-semibold text-[#F59E0B] flex items-center gap-1.5 bg-[#090514] p-2.5 rounded-xl border border-amber-500/30">
+                <span>🚀</span>
+                <span>Earn <strong>300–700 MAGES</strong> through a random reward!</span>
+              </div>
 
               {/* Reward & Pricing Pill */}
               <div className="p-4 rounded-2xl bg-[#090514] border border-[#2E1B4E] mb-5 grid grid-cols-2 gap-3 text-center">
