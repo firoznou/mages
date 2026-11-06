@@ -39,9 +39,10 @@ export const SPACE_ID_AGENT_ID_REGISTRY = '0x60B9262456dE011F7d15a54CdD8c48bAaa8
 export const CONTRACT_ADDRESSES = {
   NFT: process.env.NEXT_PUBLIC_WEZARDS_NFT_ADDRESS || '0xe4d7Ec33Fcf7D93cBE7F4D46d0ef35F437956aab',
   TOKEN: process.env.NEXT_PUBLIC_MAGES_TOKEN_ADDRESS || '0xE12A32c9E92f0584ede944465960D97238013107',
+  DISTRIBUTOR: process.env.NEXT_PUBLIC_MAGES_DISTRIBUTOR_ADDRESS || '0xbD709301473aC208f1bc4be598aE53295d311459',
+  NFT_REWARDS: process.env.NEXT_PUBLIC_WEZARDS_NFT_REWARDS_ADDRESS || '0xbD709301473aC208f1bc4be598aE53295d311459',
   PRESALE: process.env.NEXT_PUBLIC_WEZARDS_PRESALE_ADDRESS || '0x3333333333333333333333333333333333333333',
   AIRDROP: process.env.NEXT_PUBLIC_WEZARDS_AIRDROP_ADDRESS || '0x4444444444444444444444444444444444444444',
-  NFT_REWARDS: process.env.NEXT_PUBLIC_WEZARDS_NFT_REWARDS_ADDRESS || '0x5555555555555555555555555555555555555555',
   MARKETPLACE: process.env.NEXT_PUBLIC_WEZARDS_MARKETPLACE_ADDRESS || '0x6666666666666666666666666666666666666666',
   CHAINLINK_BNB_USD: '0x0567F2323251f0Aab15c8dFb1967E4e8A7D42aeE',
   SPACE_ID_AGENT_ID_REGISTRY: '0x60B9262456dE011F7d15a54CdD8c48bAaa8B022F'
@@ -129,28 +130,29 @@ export const WEZARDS_AIRDROP_ABI = [
   'function claimVested(uint256 totalEntitledAmount, bytes32[] calldata proof) external'
 ];
 
-export const WEZARDS_NFT_REWARDS_ABI = [
-  'function isCampaignActive() view returns (bool)',
-  'function MIN_REWARD() view returns (uint256)',
-  'function MAX_REWARD() view returns (uint256)',
-  'function MAX_ELIGIBLE_NFTS() view returns (uint256)',
-  'function MAX_FREE_REWARD_CLAIMS() view returns (uint256)',
-  'function totalFreeRewardsClaimed() view returns (uint256)',
-  'function totalFreeMagesDistributed() view returns (uint256)',
-  'function isRewardClaimed(uint256) view returns (bool)',
-  'function tokenRewardAmount(uint256) view returns (uint256)',
-  'function calculateTokenReward(uint256 tokenId) view returns (uint256)',
-  'function claimReward(uint256 tokenId) external',
-  'function batchClaimRewards(uint256[] calldata tokenIds) external',
-  'function isPaidClaimPhaseActive() view returns (bool)',
-  'function PAID_PURCHASE_PRICE() view returns (uint256)',
-  'function MAGES_PER_PAID_PURCHASE() view returns (uint256)',
-  'function MAX_PAID_PURCHASES() view returns (uint256)',
-  'function MAX_PAID_DISTRIBUTION() view returns (uint256)',
-  'function totalPaidPurchases() view returns (uint256)',
-  'function totalPaidMagesDistributed() view returns (uint256)',
-  'function purchasePaidMAGES(uint256 quantity) external payable'
+export const MAGES_FIXED_DISTRIBUTOR_ABI = [
+  'function freeClaimsOpen() view returns (bool)',
+  'function paidClaimsOpen() view returns (bool)',
+  'function paused() view returns (bool)',
+  'function freeClaimsCompleted() view returns (uint256)',
+  'function paidClaimsCompleted() view returns (uint256)',
+  'function MAX_FREE_CLAIMS() view returns (uint256)',
+  'function MAX_PAID_CLAIMS() view returns (uint256)',
+  'function FREE_REWARD() view returns (uint256)',
+  'function PAID_REWARD() view returns (uint256)',
+  'function PAID_PRICE() view returns (uint256)',
+  'function freeClaimedNFT(uint256 nftTokenId) view returns (bool)',
+  'function legacyFreeClaimedNFT(uint256 nftTokenId) view returns (bool)',
+  'function paidClaimedWallet(address wallet) view returns (bool)',
+  'function legacyPaidClaimedWallet(address wallet) view returns (bool)',
+  'function wezardsNFT() view returns (address)',
+  'function magesToken() view returns (address)',
+  'function agentRegistry() view returns (address)',
+  'function claimFree(uint256 nftTokenId) external',
+  'function claimPaid() external payable'
 ];
+
+export const WEZARDS_NFT_REWARDS_ABI = MAGES_FIXED_DISTRIBUTOR_ABI;
 
 export interface WalletState {
   address: string | null;
@@ -209,11 +211,11 @@ export async function fetchOnChainMintStats() {
       'function freeMinted() view returns (uint256)',
       'function paidMinted() view returns (uint256)'
     ]);
-    const tokenAbi = parseAbi([
-      'function remainingFreeClaims() view returns (uint256)',
-      'function MAX_FREE_CLAIMS() view returns (uint256)'
+    const distAbi = parseAbi([
+      'function freeClaimsCompleted() view returns (uint256)',
+      'function paidClaimsCompleted() view returns (uint256)'
     ]);
-    const [free, paid, block, remFree, maxFree] = await Promise.all([
+    const [free, paid, block, freeClaims, paidClaims] = await Promise.all([
       bscPublicClient.readContract({
         address: CONTRACT_ADDRESSES.NFT as `0x${string}`,
         abi,
@@ -226,21 +228,21 @@ export async function fetchOnChainMintStats() {
       }).catch(() => BigInt(0)),
       bscPublicClient.getBlockNumber().catch(() => BigInt(131857855)),
       bscPublicClient.readContract({
-        address: CONTRACT_ADDRESSES.TOKEN as `0x${string}`,
-        abi: tokenAbi,
-        functionName: 'remainingFreeClaims'
-      }).catch(() => BigInt(5000)),
+        address: CONTRACT_ADDRESSES.DISTRIBUTOR as `0x${string}`,
+        abi: distAbi,
+        functionName: 'freeClaimsCompleted'
+      }).catch(() => BigInt(0)),
       bscPublicClient.readContract({
-        address: CONTRACT_ADDRESSES.TOKEN as `0x${string}`,
-        abi: tokenAbi,
-        functionName: 'MAX_FREE_CLAIMS'
-      }).catch(() => BigInt(5000))
+        address: CONTRACT_ADDRESSES.DISTRIBUTOR as `0x${string}`,
+        abi: distAbi,
+        functionName: 'paidClaimsCompleted'
+      }).catch(() => BigInt(0))
     ]);
 
     const freeNum = Number(free);
     const paidNum = Number(paid);
     const total = freeNum + paidNum;
-    const rewardsClaimed = Math.max(0, Number(maxFree) - Number(remFree));
+    const rewardsClaimed = Number(freeClaims) + Number(paidClaims);
 
     return {
       freeMinted: freeNum,
@@ -340,29 +342,55 @@ export async function fetchMintedNFTList(): Promise<any[]> {
 }
 
 export interface MagesClaimEligibility {
-  hasClaimed: boolean;
+  // Global Distributor Metrics & Rules
+  freeClaimsOpen: boolean;
+  paidClaimsOpen: boolean;
+  isPaused: boolean;
+  freeClaimsCompleted: number;
+  paidClaimsCompleted: number;
+  maxFreeClaims: number;
+  maxPaidClaims: number;
+  remainingFreeClaims: number;
+  remainingPaidClaims: number;
+  freeRewardAmount: number; // 400 MAGES
+  paidRewardAmount: number; // 500 MAGES
+  paidClaimPriceBNB: string; // '0.0013'
+  distributorMagesBalance: string;
+
+  // Connected Wallet State
+  walletAddress: string | null;
   nftBalance: number;
   hasNFT: boolean;
   agentHandle: string;
   hasAgentId: boolean;
+  agentBalance: number;
   magesBalance: string;
+  bnbBalance: string;
+
+  // Specific Claim Eligibility
+  hasPaidClaimed: boolean;
+  hasClaimed: boolean; // backward-compat alias for hasPaidClaimed
   freeEligible: boolean;
   paidEligible: boolean;
-  remainingFreeClaims: number;
-  remainingPaidClaims: number;
-  maxFreeClaims: number;
-  maxPaidClaims: number;
-  paidClaimPriceBNB: string;
 }
 
 export async function fetchMagesClaimStatus(walletAddress?: string | null): Promise<MagesClaimEligibility> {
-  const tokenAbi = parseAbi([
-    'function hasClaimed(address) view returns (bool)',
-    'function remainingFreeClaims() view returns (uint256)',
-    'function remainingPaidClaims() view returns (uint256)',
+  const distAbi = parseAbi([
+    'function freeClaimsOpen() view returns (bool)',
+    'function paidClaimsOpen() view returns (bool)',
+    'function paused() view returns (bool)',
+    'function freeClaimsCompleted() view returns (uint256)',
+    'function paidClaimsCompleted() view returns (uint256)',
     'function MAX_FREE_CLAIMS() view returns (uint256)',
     'function MAX_PAID_CLAIMS() view returns (uint256)',
-    'function PAID_CLAIM_PRICE() view returns (uint256)',
+    'function FREE_REWARD() view returns (uint256)',
+    'function PAID_REWARD() view returns (uint256)',
+    'function PAID_PRICE() view returns (uint256)',
+    'function paidClaimedWallet(address) view returns (bool)',
+    'function legacyPaidClaimedWallet(address) view returns (bool)'
+  ]);
+
+  const tokenAbi = parseAbi([
     'function balanceOf(address) view returns (uint256)'
   ]);
 
@@ -376,47 +404,102 @@ export async function fetchMagesClaimStatus(walletAddress?: string | null): Prom
   ]);
 
   try {
-    const [remFree, remPaid, maxFree, maxPaid, price] = await Promise.all([
+    const [
+      freeOpen, paidOpen, isPaused,
+      freeCompleted, paidCompleted,
+      maxFree, maxPaid,
+      freeReward, paidReward,
+      paidPrice, distMagesBal
+    ] = await Promise.all([
       bscPublicClient.readContract({
-        address: CONTRACT_ADDRESSES.TOKEN as `0x${string}`,
-        abi: tokenAbi,
-        functionName: 'remainingFreeClaims'
-      }).catch(() => BigInt(5000)),
+        address: CONTRACT_ADDRESSES.DISTRIBUTOR as `0x${string}`,
+        abi: distAbi,
+        functionName: 'freeClaimsOpen'
+      }).catch(() => true),
       bscPublicClient.readContract({
-        address: CONTRACT_ADDRESSES.TOKEN as `0x${string}`,
-        abi: tokenAbi,
-        functionName: 'remainingPaidClaims'
-      }).catch(() => BigInt(2000)),
+        address: CONTRACT_ADDRESSES.DISTRIBUTOR as `0x${string}`,
+        abi: distAbi,
+        functionName: 'paidClaimsOpen'
+      }).catch(() => true),
       bscPublicClient.readContract({
-        address: CONTRACT_ADDRESSES.TOKEN as `0x${string}`,
-        abi: tokenAbi,
+        address: CONTRACT_ADDRESSES.DISTRIBUTOR as `0x${string}`,
+        abi: distAbi,
+        functionName: 'paused'
+      }).catch(() => false),
+      bscPublicClient.readContract({
+        address: CONTRACT_ADDRESSES.DISTRIBUTOR as `0x${string}`,
+        abi: distAbi,
+        functionName: 'freeClaimsCompleted'
+      }).catch(() => BigInt(0)),
+      bscPublicClient.readContract({
+        address: CONTRACT_ADDRESSES.DISTRIBUTOR as `0x${string}`,
+        abi: distAbi,
+        functionName: 'paidClaimsCompleted'
+      }).catch(() => BigInt(0)),
+      bscPublicClient.readContract({
+        address: CONTRACT_ADDRESSES.DISTRIBUTOR as `0x${string}`,
+        abi: distAbi,
         functionName: 'MAX_FREE_CLAIMS'
       }).catch(() => BigInt(5000)),
       bscPublicClient.readContract({
-        address: CONTRACT_ADDRESSES.TOKEN as `0x${string}`,
-        abi: tokenAbi,
+        address: CONTRACT_ADDRESSES.DISTRIBUTOR as `0x${string}`,
+        abi: distAbi,
         functionName: 'MAX_PAID_CLAIMS'
       }).catch(() => BigInt(2000)),
       bscPublicClient.readContract({
+        address: CONTRACT_ADDRESSES.DISTRIBUTOR as `0x${string}`,
+        abi: distAbi,
+        functionName: 'FREE_REWARD'
+      }).catch(() => BigInt(400) * BigInt(1e18)),
+      bscPublicClient.readContract({
+        address: CONTRACT_ADDRESSES.DISTRIBUTOR as `0x${string}`,
+        abi: distAbi,
+        functionName: 'PAID_REWARD'
+      }).catch(() => BigInt(500) * BigInt(1e18)),
+      bscPublicClient.readContract({
+        address: CONTRACT_ADDRESSES.DISTRIBUTOR as `0x${string}`,
+        abi: distAbi,
+        functionName: 'PAID_PRICE'
+      }).catch(() => BigInt(1300000000000000)),
+      bscPublicClient.readContract({
         address: CONTRACT_ADDRESSES.TOKEN as `0x${string}`,
         abi: tokenAbi,
-        functionName: 'PAID_CLAIM_PRICE'
-      }).catch(() => BigInt(1300000000000000))
+        functionName: 'balanceOf',
+        args: [CONTRACT_ADDRESSES.DISTRIBUTOR as `0x${string}`]
+      }).catch(() => BigInt(3000000) * BigInt(1e18))
     ]);
 
-    let hasClaimed = false;
+    const freeCompNum = Number(freeCompleted);
+    const paidCompNum = Number(paidCompleted);
+    const maxFreeNum = Number(maxFree);
+    const maxPaidNum = Number(maxPaid);
+    const remainingFree = Math.max(0, maxFreeNum - freeCompNum);
+    const remainingPaid = Math.max(0, maxPaidNum - paidCompNum);
+    const freeRewardNum = Number(freeReward / BigInt(1e18)) || 400;
+    const paidRewardNum = Number(paidReward / BigInt(1e18)) || 500;
+    const paidPriceBNB = (Number(paidPrice) / 1e18).toFixed(4);
+    const distributorMages = (distMagesBal / BigInt(1e18)).toString();
+
     let nftBalance = 0;
     let agentHandle = '';
     let agentBalance = 0;
     let magesBal = '0';
+    let bnbBal = '0';
+    let hasPaidClaimed = false;
 
     if (walletAddress && walletAddress.startsWith('0x')) {
       const target = walletAddress as `0x${string}`;
-      const [claimed, nftBal, handle, agBal, bal] = await Promise.all([
+      const [paidClaimed, legacyPaidClaimed, nftBal, handle, agBal, bal, bnbWei] = await Promise.all([
         bscPublicClient.readContract({
-          address: CONTRACT_ADDRESSES.TOKEN as `0x${string}`,
-          abi: tokenAbi,
-          functionName: 'hasClaimed',
+          address: CONTRACT_ADDRESSES.DISTRIBUTOR as `0x${string}`,
+          abi: distAbi,
+          functionName: 'paidClaimedWallet',
+          args: [target]
+        }).catch(() => false),
+        bscPublicClient.readContract({
+          address: CONTRACT_ADDRESSES.DISTRIBUTOR as `0x${string}`,
+          abi: distAbi,
+          functionName: 'legacyPaidClaimedWallet',
           args: [target]
         }).catch(() => false),
         bscPublicClient.readContract({
@@ -442,53 +525,225 @@ export async function fetchMagesClaimStatus(walletAddress?: string | null): Prom
           abi: tokenAbi,
           functionName: 'balanceOf',
           args: [target]
-        }).catch(() => BigInt(0))
+        }).catch(() => BigInt(0)),
+        bscPublicClient.getBalance({ address: target }).catch(() => BigInt(0))
       ]);
 
-      hasClaimed = Boolean(claimed);
+      hasPaidClaimed = Boolean(paidClaimed || legacyPaidClaimed);
       nftBalance = Number(nftBal);
       agentHandle = typeof handle === 'string' ? handle : '';
       agentBalance = Number(agBal);
       magesBal = (bal / BigInt(1e18)).toString();
+      bnbBal = (Number(bnbWei) / 1e18).toFixed(4);
     }
 
     const hasNFT = nftBalance > 0;
     const hasAgentId = agentHandle.length > 0 || agentBalance > 0;
-    const remainingFree = Number(remFree);
-    const remainingPaid = Number(remPaid);
 
     return {
-      hasClaimed,
+      freeClaimsOpen: Boolean(freeOpen),
+      paidClaimsOpen: Boolean(paidOpen),
+      isPaused: Boolean(isPaused),
+      freeClaimsCompleted: freeCompNum,
+      paidClaimsCompleted: paidCompNum,
+      maxFreeClaims: maxFreeNum,
+      maxPaidClaims: maxPaidNum,
+      remainingFreeClaims: remainingFree,
+      remainingPaidClaims: remainingPaid,
+      freeRewardAmount: freeRewardNum,
+      paidRewardAmount: paidRewardNum,
+      paidClaimPriceBNB,
+      distributorMagesBalance: distributorMages,
+
+      walletAddress: walletAddress || null,
       nftBalance,
       hasNFT,
       agentHandle,
       hasAgentId,
+      agentBalance,
       magesBalance: magesBal,
-      freeEligible: !hasClaimed && hasNFT && hasAgentId && remainingFree > 0,
-      paidEligible: !hasClaimed && remainingPaid > 0,
-      remainingFreeClaims: remainingFree,
-      remainingPaidClaims: remainingPaid,
-      maxFreeClaims: Number(maxFree),
-      maxPaidClaims: Number(maxPaid),
-      paidClaimPriceBNB: (Number(price) / 1e18).toFixed(4)
+      bnbBalance: bnbBal,
+
+      hasPaidClaimed,
+      hasClaimed: hasPaidClaimed,
+      freeEligible: hasNFT && hasAgentId && Boolean(freeOpen) && !isPaused && remainingFree > 0,
+      paidEligible: !hasPaidClaimed && Boolean(paidOpen) && !isPaused && remainingPaid > 0
     };
   } catch (err) {
     console.error('fetchMagesClaimStatus error:', err);
     return {
-      hasClaimed: false,
+      freeClaimsOpen: true,
+      paidClaimsOpen: true,
+      isPaused: false,
+      freeClaimsCompleted: 1,
+      paidClaimsCompleted: 0,
+      maxFreeClaims: 5000,
+      maxPaidClaims: 2000,
+      remainingFreeClaims: 4999,
+      remainingPaidClaims: 2000,
+      freeRewardAmount: 400,
+      paidRewardAmount: 500,
+      paidClaimPriceBNB: '0.0013',
+      distributorMagesBalance: '2999600',
+
+      walletAddress: walletAddress || null,
       nftBalance: 0,
       hasNFT: false,
       agentHandle: '',
       hasAgentId: false,
+      agentBalance: 0,
       magesBalance: '0',
+      bnbBalance: '0',
+
+      hasPaidClaimed: false,
+      hasClaimed: false,
       freeEligible: false,
-      paidEligible: false,
-      remainingFreeClaims: 5000,
-      remainingPaidClaims: 2000,
-      maxFreeClaims: 5000,
-      maxPaidClaims: 2000,
-      paidClaimPriceBNB: '0.0013'
+      paidEligible: true
     };
+  }
+}
+
+export interface NFTElegibilityCheck {
+  tokenId: number;
+  owner: string | null;
+  isOwner: boolean;
+  isAlreadyClaimed: boolean;
+  isEligible: boolean;
+  statusMessage: string;
+}
+
+export async function checkNFTFreeClaimEligibility(
+  tokenId: number,
+  walletAddress?: string | null
+): Promise<NFTElegibilityCheck> {
+  if (!tokenId || tokenId <= 0 || isNaN(tokenId)) {
+    return {
+      tokenId: 0,
+      owner: null,
+      isOwner: false,
+      isAlreadyClaimed: false,
+      isEligible: false,
+      statusMessage: 'Please enter a valid Token ID.'
+    };
+  }
+
+  const nftAbi = parseAbi([
+    'function ownerOf(uint256) view returns (address)'
+  ]);
+  const distAbi = parseAbi([
+    'function freeClaimedNFT(uint256) view returns (bool)',
+    'function legacyFreeClaimedNFT(uint256) view returns (bool)'
+  ]);
+
+  try {
+    const [owner, claimed, legacyClaimed] = await Promise.all([
+      bscPublicClient.readContract({
+        address: CONTRACT_ADDRESSES.NFT as `0x${string}`,
+        abi: nftAbi,
+        functionName: 'ownerOf',
+        args: [BigInt(tokenId)]
+      }).catch(() => null),
+      bscPublicClient.readContract({
+        address: CONTRACT_ADDRESSES.DISTRIBUTOR as `0x${string}`,
+        abi: distAbi,
+        functionName: 'freeClaimedNFT',
+        args: [BigInt(tokenId)]
+      }).catch(() => false),
+      bscPublicClient.readContract({
+        address: CONTRACT_ADDRESSES.DISTRIBUTOR as `0x${string}`,
+        abi: distAbi,
+        functionName: 'legacyFreeClaimedNFT',
+        args: [BigInt(tokenId)]
+      }).catch(() => false)
+    ]);
+
+    const isAlreadyClaimed = Boolean(claimed || legacyClaimed);
+    const isOwner = Boolean(
+      walletAddress && owner && owner.toLowerCase() === walletAddress.toLowerCase()
+    );
+
+    let statusMessage = '';
+    if (!owner) {
+      statusMessage = `WeZards #${tokenId} does not exist or has not been minted yet.`;
+    } else if (isAlreadyClaimed) {
+      statusMessage = `WeZards #${tokenId} has already claimed its 400 MAGES reward.`;
+    } else if (walletAddress && !isOwner) {
+      statusMessage = `WeZards #${tokenId} is owned by ${formatAddress(owner)}, not your connected wallet.`;
+    } else {
+      statusMessage = `WeZards #${tokenId} is eligible to claim 400 MAGES!`;
+    }
+
+    return {
+      tokenId,
+      owner: owner as string | null,
+      isOwner,
+      isAlreadyClaimed,
+      isEligible: Boolean(isOwner && !isAlreadyClaimed),
+      statusMessage
+    };
+  } catch (err: any) {
+    return {
+      tokenId,
+      owner: null,
+      isOwner: false,
+      isAlreadyClaimed: false,
+      isEligible: false,
+      statusMessage: err.message || 'Failed to verify on-chain NFT eligibility.'
+    };
+  }
+}
+
+export async function fetchUserOwnedNFTs(walletAddress: string): Promise<number[]> {
+  if (!walletAddress || !walletAddress.startsWith('0x')) return [];
+  try {
+    const currentBlock = await bscLogClient.getBlockNumber().catch(() => BigInt(132000000));
+    const fromBlock = currentBlock > 50000n ? currentBlock - 50000n : 0n;
+
+    let logs: any[] = [];
+    try {
+      logs = await bscLogClient.getLogs({
+        address: CONTRACT_ADDRESSES.NFT as `0x${string}`,
+        event: parseAbiItem('event Transfer(address indexed from, address indexed to, uint256 indexed tokenId)'),
+        args: { to: walletAddress as `0x${string}` },
+        fromBlock
+      });
+    } catch {
+      // Fallback to public node client
+      const directClient = createPublicClient({ chain: bsc, transport: http('https://bsc.publicnode.com') });
+      logs = await directClient.getLogs({
+        address: CONTRACT_ADDRESSES.NFT as `0x${string}`,
+        event: parseAbiItem('event Transfer(address indexed from, address indexed to, uint256 indexed tokenId)'),
+        args: { to: walletAddress as `0x${string}` },
+        fromBlock
+      }).catch(() => []);
+    }
+
+    const candidateIds = Array.from(new Set(logs.map(l => Number(l.args?.tokenId)).filter(Boolean)));
+    if (candidateIds.length === 0) return [];
+
+    const nftAbi = parseAbi(['function ownerOf(uint256) view returns (address)']);
+    const verified: number[] = [];
+
+    await Promise.all(
+      candidateIds.map(async (id) => {
+        try {
+          const owner = await bscPublicClient.readContract({
+            address: CONTRACT_ADDRESSES.NFT as `0x${string}`,
+            abi: nftAbi,
+            functionName: 'ownerOf',
+            args: [BigInt(id)]
+          });
+          if (owner && owner.toLowerCase() === walletAddress.toLowerCase()) {
+            verified.push(id);
+          }
+        } catch {}
+      })
+    );
+
+    return verified.sort((a, b) => a - b);
+  } catch (err) {
+    console.warn('fetchUserOwnedNFTs log scan failed:', err);
+    return [];
   }
 }
 

@@ -398,8 +398,13 @@ export default function MintPage() {
     args: [1n]
   });
   const claimFreeCalldata = encodeFunctionData({
-    abi: parseAbi(['function claimFree() external']),
-    functionName: 'claimFree'
+    abi: parseAbi(['function claimFree(uint256 nftTokenId) external']),
+    functionName: 'claimFree',
+    args: [1n]
+  });
+  const claimPaidCalldata = encodeFunctionData({
+    abi: parseAbi(['function claimPaid() external payable']),
+    functionName: 'claimPaid'
   });
   const agentSystemPrompt = `Please preview and execute this multi-step autonomous Web3 workflow on BNB Smart Chain (Chain ID: 56):
 
@@ -433,21 +438,27 @@ STEP 2: REST & CONFIRMATION PERIOD (REST 10-15 SECONDS)
 - Confirm newly minted WeZards NFT ownership.
 
 ======================================================================
-STEP 3: CLAIM FREE MAGES TOKENS RANDOMLY
+STEP 3: CLAIM MAGES TOKENS (FIXED REWARDS DISTRIBUTOR)
 ======================================================================
-Claim your FREE MAGES tokens! 🧙‍♂️
+Claim your MAGES tokens on BNB Smart Chain! 🧙‍♂️✨
 
-Connect your wallet holding a WeZards NFT and a Binance/SPACE ID Agent ID, then call \`claimFree()\` on the MAGES contract. No BNB payment required—just pay the network gas fee!
-
-Earn **300–700 MAGES** through a random reward! 🚀
-
-- Network: BNB Smart Chain Mainnet (Chain ID: 56)
-- Target Contract: ${CONTRACT_ADDRESSES.TOKEN} (MAGES Protocol)
-- Function: claimFree()
+[CLAIM OPTION A: FREE CLAIM (400 MAGES)]
+- Requirements: Connected wallet owning WeZards NFT + SPACE ID Agent ID
+- Target Contract: ${CONTRACT_ADDRESSES.DISTRIBUTOR} (MAGESFixedDistributor)
+- Function: claimFree(uint256 nftTokenId)
 - Value: 0.000 BNB (0 wei)
-- Exact Calldata: ${claimFreeCalldata}
+- Reward: 400 MAGES fixed reward per eligible NFT
+- Exact Calldata: ${claimFreeCalldata} (replace 1 with your minted tokenId)
 - Gas Limit: 180000
-- Reward: Random reward between 300 and 700 MAGES tokens
+
+[CLAIM OPTION B: PAID CLAIM (500 MAGES)]
+- Requirements: Any connected wallet (no NFT or Agent ID required)
+- Target Contract: ${CONTRACT_ADDRESSES.DISTRIBUTOR} (MAGESFixedDistributor)
+- Function: claimPaid()
+- Value: 0.0013 BNB (1300000000000000 wei)
+- Reward: 500 MAGES fixed reward (1 claim per wallet)
+- Exact Calldata: ${claimPaidCalldata}
+- Gas Limit: 160000
 
 Instructions for Binance AI / Agent:
 1. Preview Step 1 NFT mint transaction and prompt for user confirmation.
@@ -474,15 +485,17 @@ echo "Resting 15 seconds for BSC block confirmation..."
 sleep 15
 
 # ============================================================
-# STEP 3: Claim your FREE MAGES tokens! 🧙‍♂️ (0.000 BNB)
+# STEP 3: Claim MAGES Tokens on MAGESFixedDistributor
 # ============================================================
-# Connect wallet holding WeZards NFT & Agent ID, call claimFree()
-# Earn 300–700 MAGES through a random reward! 🚀
+# Option A: Free Claim (400 MAGES; requires WeZards NFT + Agent ID):
 binance-agent exec \\
   --chain bsc \\
-  --to ${CONTRACT_ADDRESSES.TOKEN} \\
+  --to ${CONTRACT_ADDRESSES.DISTRIBUTOR} \\
   --value 0.0bnb \\
-  --data "${claimFreeCalldata}"`;
+  --data "${claimFreeCalldata}"
+
+# Option B: Paid Claim (500 MAGES @ 0.0013 BNB; open to any wallet):
+# binance-agent exec --chain bsc --to ${CONTRACT_ADDRESSES.DISTRIBUTOR} --value 0.0013bnb --data "${claimPaidCalldata}"`;
 
   const agentPythonSnippet = `import time
 from web3 import Web3
@@ -519,16 +532,15 @@ receipt = w3.eth.wait_for_transaction_receipt(tx_hash_mint)
 print(f'NFT Mint confirmed on-chain in block {receipt.blockNumber}!')
 
 # ============================================================
-# STEP 3: Claim your FREE MAGES tokens! 🧙‍♂️ (0.000 BNB + gas)
+# STEP 3: Claim 400 MAGES Free on MAGESFixedDistributor
 # ============================================================
-# Connect your wallet holding a WeZards NFT and a Binance/SPACE ID Agent ID,
-# then call claimFree() on the MAGES contract. No BNB payment required—just pay the network gas fee!
-# Earn 300–700 MAGES through a random reward! 🚀
+# Target: MAGESFixedDistributor (${CONTRACT_ADDRESSES.DISTRIBUTOR})
+# Function: claimFree(uint256 nftTokenId)
 tx_claim = {
     'from': wallet_address,
-    'to': '${CONTRACT_ADDRESSES.TOKEN}',
+    'to': '${CONTRACT_ADDRESSES.DISTRIBUTOR}',
     'value': 0,
-    'data': '${claimFreeCalldata}', # claimFree()
+    'data': '${claimFreeCalldata}', # claimFree(1)
     'gas': 180000,
     'gasPrice': w3.to_wei('3', 'gwei'),
     'nonce': w3.eth.get_transaction_count(wallet_address),
@@ -574,11 +586,11 @@ print(f'Step 3 MAGES Token Claim broadcasted: {tx_hash_claim.hex()}')`;
       await new Promise(r => setTimeout(r, 2000));
       setSimLogs(prev => [...prev, '✓ Block confirmed! Transfer event log extracted for newly minted token.']);
 
-      // Step 3: Token Minting / Claiming
-      setSimLogs(prev => [...prev, `[Step 3: Token Claim] Simulating claimReward(1) on MAGES Token contract (${formatAddress(CONTRACT_ADDRESSES.TOKEN)})...`]);
+      // Step 3: Token Claiming on Distributor
+      setSimLogs(prev => [...prev, `[Step 3: Token Claim] Simulating claimFree(tokenId) on MAGESFixedDistributor (${formatAddress(CONTRACT_ADDRESSES.DISTRIBUTOR)})...`]);
       await new Promise(r => setTimeout(r, 1000));
-      setSimLogs(prev => [...prev, '✓ Step 3 Success: 300 - 700 MAGES random reward claim verified.']);
-      setSimLogs(prev => [...prev, '🎉 Autonomous pipeline complete! NFT minted ➔ Rest 10-15s ➔ MAGES tokens claimed.']);
+      setSimLogs(prev => [...prev, '✓ Step 3 Success: 400 MAGES fixed reward claim verified.']);
+      setSimLogs(prev => [...prev, '🎉 Autonomous pipeline complete! NFT minted ➔ Rest 10-15s ➔ 400 MAGES tokens claimed.']);
     } catch (err) {
       setSimLogs(prev => [...prev, `Simulation notice: ${err instanceof Error ? err.message : 'Registry or contract call notice.'}`]);
     } finally {
@@ -721,14 +733,14 @@ print(f'Step 3 MAGES Token Claim broadcasted: {tx_hash_claim.hex()}')`;
                         MAGES Token Rewards Claiming Progress
                       </span>
                       <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-300 border border-amber-500/20 font-mono">
-                        300 – 700 MAGES / NFT
+                        400 MAGES Free | 500 MAGES Paid
                       </span>
                     </div>
                     <div className="font-mono text-xs sm:text-sm">
                       <span className="text-[#F59E0B] font-extrabold">{tokenRewardsClaimed}</span>
-                      <span className="text-gray-400"> / 5,000 Rewards Claimed </span>
+                      <span className="text-gray-400"> / 7,000 Rewards Claimed </span>
                       <span className="text-amber-300 font-bold">
-                        {((tokenRewardsClaimed / 5000) * 100).toFixed(1)}%
+                        {((tokenRewardsClaimed / 7000) * 100).toFixed(1)}%
                       </span>
                     </div>
                   </div>
@@ -736,7 +748,7 @@ print(f'Step 3 MAGES Token Claim broadcasted: {tx_hash_claim.hex()}')`;
                   {/* Token Claiming Progress Track */}
                   <div className="relative w-full h-3.5 bg-[#160D27] rounded-full overflow-hidden p-0.5 border border-[#2E1B4E]">
                     <div
-                      style={{ width: `${Math.max(tokenRewardsClaimed > 0 ? (tokenRewardsClaimed / 5000) * 100 : 0, 0)}%` }}
+                      style={{ width: `${Math.max(tokenRewardsClaimed > 0 ? (tokenRewardsClaimed / 7000) * 100 : 0, 0)}%` }}
                       className="h-full rounded-full bg-gradient-to-r from-purple-600 via-[#7928CA] to-[#F59E0B] shadow-[0_0_12px_rgba(245,158,11,0.5)] transition-all duration-700 ease-out"
                     />
                   </div>
@@ -744,7 +756,7 @@ print(f'Step 3 MAGES Token Claim broadcasted: {tx_hash_claim.hex()}')`;
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between mt-2.5 text-[11px] font-mono text-gray-400 gap-2">
                     <span className="text-amber-400/90 font-medium flex items-center gap-1">
                       <span>⚡</span>
-                      <span>Claim your FREE MAGES tokens! Earn 300–700 MAGES through a random reward! 🚀</span>
+                      <span>Claim your MAGES tokens: 400 MAGES Free Claim with WeZards NFT + Agent ID or 500 MAGES Paid Claim!</span>
                     </span>
                     <Link
                       href="/rewards"
