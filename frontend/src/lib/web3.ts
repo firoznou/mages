@@ -22,6 +22,8 @@ export const bscPublicClient = createPublicClient({
   ])
 });
 
+export const SPACE_ID_AGENT_ID_REGISTRY = '0x60B9262456dE011F7d15a54CdD8c48bAaa8B022F';
+
 export const CONTRACT_ADDRESSES = {
   NFT: process.env.NEXT_PUBLIC_WEZARDS_NFT_ADDRESS || '0xe4d7Ec33Fcf7D93cBE7F4D46d0ef35F437956aab',
   TOKEN: process.env.NEXT_PUBLIC_MAGES_TOKEN_ADDRESS || '0xE12A32c9E92f0584ede944465960D97238013107',
@@ -29,7 +31,8 @@ export const CONTRACT_ADDRESSES = {
   AIRDROP: process.env.NEXT_PUBLIC_WEZARDS_AIRDROP_ADDRESS || '0x4444444444444444444444444444444444444444',
   NFT_REWARDS: process.env.NEXT_PUBLIC_WEZARDS_NFT_REWARDS_ADDRESS || '0x5555555555555555555555555555555555555555',
   MARKETPLACE: process.env.NEXT_PUBLIC_WEZARDS_MARKETPLACE_ADDRESS || '0x6666666666666666666666666666666666666666',
-  CHAINLINK_BNB_USD: '0x0567F2323251f0Aab15c8dFb1967E4e8A7D42aeE'
+  CHAINLINK_BNB_USD: '0x0567F2323251f0Aab15c8dFb1967E4e8A7D42aeE',
+  SPACE_ID_AGENT_ID_REGISTRY: '0x60B9262456dE011F7d15a54CdD8c48bAaa8B022F'
 };
 
 export const WEZARDS_NFT_ABI = [
@@ -70,7 +73,17 @@ export const MAGES_TOKEN_ABI = [
   'function balanceOf(address account) view returns (uint256)',
   'function transfer(address to, uint256 amount) returns (bool)',
   'function allowance(address owner, address spender) view returns (uint256)',
-  'function approve(address spender, uint256 amount) returns (bool)'
+  'function approve(address spender, uint256 amount) returns (bool)',
+  'function claimFree() external',
+  'function claimPaid() external payable',
+  'function hasClaimed(address) view returns (bool)',
+  'function remainingFreeClaims() view returns (uint256)',
+  'function remainingPaidClaims() view returns (uint256)',
+  'function MAX_FREE_CLAIMS() view returns (uint256)',
+  'function MAX_PAID_CLAIMS() view returns (uint256)',
+  'function PAID_CLAIM_PRICE() view returns (uint256)',
+  'function wezardsNFT() view returns (address)',
+  'function agentRegistry() view returns (address)'
 ];
 
 export const WEZARDS_PRESALE_ABI = [
@@ -294,5 +307,158 @@ export async function fetchMintedNFTList(): Promise<any[]> {
   } catch (err) {
     console.error('Failed to load minted NFT list:', err);
     return [];
+  }
+}
+
+export interface MagesClaimEligibility {
+  hasClaimed: boolean;
+  nftBalance: number;
+  hasNFT: boolean;
+  agentHandle: string;
+  hasAgentId: boolean;
+  magesBalance: string;
+  freeEligible: boolean;
+  paidEligible: boolean;
+  remainingFreeClaims: number;
+  remainingPaidClaims: number;
+  maxFreeClaims: number;
+  maxPaidClaims: number;
+  paidClaimPriceBNB: string;
+}
+
+export async function fetchMagesClaimStatus(walletAddress?: string | null): Promise<MagesClaimEligibility> {
+  const tokenAbi = parseAbi([
+    'function hasClaimed(address) view returns (bool)',
+    'function remainingFreeClaims() view returns (uint256)',
+    'function remainingPaidClaims() view returns (uint256)',
+    'function MAX_FREE_CLAIMS() view returns (uint256)',
+    'function MAX_PAID_CLAIMS() view returns (uint256)',
+    'function PAID_CLAIM_PRICE() view returns (uint256)',
+    'function balanceOf(address) view returns (uint256)'
+  ]);
+
+  const nftAbi = parseAbi([
+    'function balanceOf(address) view returns (uint256)'
+  ]);
+
+  const agentAbi = parseAbi([
+    'function handleOf(address) view returns (string)',
+    'function balanceOf(address) view returns (uint256)'
+  ]);
+
+  try {
+    const [remFree, remPaid, maxFree, maxPaid, price] = await Promise.all([
+      bscPublicClient.readContract({
+        address: CONTRACT_ADDRESSES.TOKEN as `0x${string}`,
+        abi: tokenAbi,
+        functionName: 'remainingFreeClaims'
+      }).catch(() => BigInt(5000)),
+      bscPublicClient.readContract({
+        address: CONTRACT_ADDRESSES.TOKEN as `0x${string}`,
+        abi: tokenAbi,
+        functionName: 'remainingPaidClaims'
+      }).catch(() => BigInt(2000)),
+      bscPublicClient.readContract({
+        address: CONTRACT_ADDRESSES.TOKEN as `0x${string}`,
+        abi: tokenAbi,
+        functionName: 'MAX_FREE_CLAIMS'
+      }).catch(() => BigInt(5000)),
+      bscPublicClient.readContract({
+        address: CONTRACT_ADDRESSES.TOKEN as `0x${string}`,
+        abi: tokenAbi,
+        functionName: 'MAX_PAID_CLAIMS'
+      }).catch(() => BigInt(2000)),
+      bscPublicClient.readContract({
+        address: CONTRACT_ADDRESSES.TOKEN as `0x${string}`,
+        abi: tokenAbi,
+        functionName: 'PAID_CLAIM_PRICE'
+      }).catch(() => BigInt(1300000000000000))
+    ]);
+
+    let hasClaimed = false;
+    let nftBalance = 0;
+    let agentHandle = '';
+    let agentBalance = 0;
+    let magesBal = '0';
+
+    if (walletAddress && walletAddress.startsWith('0x')) {
+      const target = walletAddress as `0x${string}`;
+      const [claimed, nftBal, handle, agBal, bal] = await Promise.all([
+        bscPublicClient.readContract({
+          address: CONTRACT_ADDRESSES.TOKEN as `0x${string}`,
+          abi: tokenAbi,
+          functionName: 'hasClaimed',
+          args: [target]
+        }).catch(() => false),
+        bscPublicClient.readContract({
+          address: CONTRACT_ADDRESSES.NFT as `0x${string}`,
+          abi: nftAbi,
+          functionName: 'balanceOf',
+          args: [target]
+        }).catch(() => BigInt(0)),
+        bscPublicClient.readContract({
+          address: SPACE_ID_AGENT_ID_REGISTRY as `0x${string}`,
+          abi: agentAbi,
+          functionName: 'handleOf',
+          args: [target]
+        }).catch(() => ''),
+        bscPublicClient.readContract({
+          address: SPACE_ID_AGENT_ID_REGISTRY as `0x${string}`,
+          abi: agentAbi,
+          functionName: 'balanceOf',
+          args: [target]
+        }).catch(() => BigInt(0)),
+        bscPublicClient.readContract({
+          address: CONTRACT_ADDRESSES.TOKEN as `0x${string}`,
+          abi: tokenAbi,
+          functionName: 'balanceOf',
+          args: [target]
+        }).catch(() => BigInt(0))
+      ]);
+
+      hasClaimed = Boolean(claimed);
+      nftBalance = Number(nftBal);
+      agentHandle = typeof handle === 'string' ? handle : '';
+      agentBalance = Number(agBal);
+      magesBal = (bal / BigInt(1e18)).toString();
+    }
+
+    const hasNFT = nftBalance > 0;
+    const hasAgentId = agentHandle.length > 0 || agentBalance > 0;
+    const remainingFree = Number(remFree);
+    const remainingPaid = Number(remPaid);
+
+    return {
+      hasClaimed,
+      nftBalance,
+      hasNFT,
+      agentHandle,
+      hasAgentId,
+      magesBalance: magesBal,
+      freeEligible: !hasClaimed && hasNFT && hasAgentId && remainingFree > 0,
+      paidEligible: !hasClaimed && remainingPaid > 0,
+      remainingFreeClaims: remainingFree,
+      remainingPaidClaims: remainingPaid,
+      maxFreeClaims: Number(maxFree),
+      maxPaidClaims: Number(maxPaid),
+      paidClaimPriceBNB: (Number(price) / 1e18).toFixed(4)
+    };
+  } catch (err) {
+    console.error('fetchMagesClaimStatus error:', err);
+    return {
+      hasClaimed: false,
+      nftBalance: 0,
+      hasNFT: false,
+      agentHandle: '',
+      hasAgentId: false,
+      magesBalance: '0',
+      freeEligible: false,
+      paidEligible: false,
+      remainingFreeClaims: 5000,
+      remainingPaidClaims: 2000,
+      maxFreeClaims: 5000,
+      maxPaidClaims: 2000,
+      paidClaimPriceBNB: '0.0013'
+    };
   }
 }

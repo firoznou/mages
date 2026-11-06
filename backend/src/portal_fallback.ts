@@ -136,6 +136,54 @@ export function renderPortalFallback(pathname: string): Response {
       </button>
     </div>
 
+    <!-- MAGES TOKEN CLAIM SECTION (Free & Paid Claims) -->
+    <div id="token-claim" class="max-w-3xl mx-auto bg-gradient-to-b from-[#160D27] to-[#0D051A] border-2 border-purple-500/40 rounded-3xl p-6 sm:p-8 shadow-[0_0_50px_rgba(121,40,202,0.2)] mb-12">
+      <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b border-[#2E1B4E] pb-4 mb-6">
+        <div>
+          <div class="flex items-center gap-2">
+            <span class="text-2xl">⚡</span>
+            <h3 class="text-2xl font-black text-white">MAGES Token Claim Hub</h3>
+            <span class="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 font-bold uppercase font-mono">Chain ID 56</span>
+          </div>
+          <p class="text-xs text-purple-300 mt-1">Claim randomly awarded <strong class="text-amber-400">300 - 700 MAGES</strong> tokens. 1 claim per wallet limit.</p>
+        </div>
+        <a href="/rewards" class="text-xs font-mono font-bold text-amber-400 hover:text-white underline">Full Rewards Page ↗</a>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+        <!-- Free Claim Card -->
+        <div class="bg-[#090514] border border-[#2E1B4E] rounded-2xl p-4 flex flex-col justify-between">
+          <div>
+            <div class="flex justify-between items-center mb-2">
+              <span class="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 font-bold font-mono">NFT + Agent ID</span>
+              <span class="text-xs font-mono font-bold text-emerald-400">0.000 BNB</span>
+            </div>
+            <h4 class="font-bold text-white text-base mb-1">Free Claim</h4>
+            <p class="text-xs text-gray-400 mb-3">Requires WeZards NFT + Binance Agent ID. Random 300 - 700 MAGES awarded.</p>
+          </div>
+          <button onclick="executeClaim('free')" class="w-full py-3 rounded-xl font-bold text-xs bg-gradient-to-r from-emerald-500 to-teal-500 hover:brightness-110 text-black transition shadow-md">
+            Claim Free MAGES (0 BNB)
+          </button>
+        </div>
+
+        <!-- Paid Claim Card -->
+        <div class="bg-[#090514] border border-[#2E1B4E] rounded-2xl p-4 flex flex-col justify-between">
+          <div>
+            <div class="flex justify-between items-center mb-2">
+              <span class="text-[10px] px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-400 font-bold font-mono">Open to All</span>
+              <span class="text-xs font-mono font-bold text-amber-400">0.0013 BNB</span>
+            </div>
+            <h4 class="font-bold text-white text-base mb-1">Paid Claim</h4>
+            <p class="text-xs text-gray-400 mb-3">No NFT or Agent ID required. Random 300 - 700 MAGES awarded.</p>
+          </div>
+          <button onclick="executeClaim('paid')" class="w-full py-3 rounded-xl font-bold text-xs bg-gradient-to-r from-amber-400 to-amber-500 hover:brightness-110 text-black transition shadow-md">
+            Claim Paid MAGES (0.0013 BNB)
+          </button>
+        </div>
+      </div>
+      <div id="claimResultMsg" class="hidden text-xs p-3 rounded-xl font-mono"></div>
+    </div>
+
     <!-- MINTING GIFT SECTION (Community X Drop) -->
     <div id="gift" class="max-w-3xl mx-auto bg-gradient-to-b from-[#160D27] to-[#0D051A] border-2 border-amber-500/40 rounded-3xl p-6 sm:p-8 shadow-[0_0_50px_rgba(245,158,11,0.15)] mb-12">
       <div class="flex items-center gap-3 mb-4">
@@ -270,6 +318,51 @@ export function renderPortalFallback(pathname: string): Response {
         }
       } else {
         alert('Please install MetaMask, Trust Wallet, or Binance Web3 Wallet to connect.');
+      }
+    }
+
+    async function executeClaim(type) {
+      const msg = document.getElementById('claimResultMsg');
+      if (!userAccount) {
+        await connectWallet();
+        if (!userAccount) return;
+      }
+      try {
+        msg.className = 'text-xs p-3 rounded-xl bg-purple-500/20 text-purple-200 border border-purple-500/30';
+        msg.innerText = '⏳ Submitting ' + (type === 'free' ? 'Free Claim (0 BNB)' : 'Paid Claim (0.0013 BNB)') + ' to BSC Mainnet...';
+        msg.classList.remove('hidden');
+
+        const chainId = await window.ethereum.request({ method: 'eth_chainId' });
+        if (parseInt(chainId, 16) !== 56) {
+          try {
+            await window.ethereum.request({ method: 'wallet_switchEthereumChain', params: [{ chainId: '0x38' }] });
+          } catch (e) {
+            alert('Please switch to BNB Smart Chain Mainnet (Chain ID 56).');
+            return;
+          }
+        }
+
+        const tokenAddress = '0xE12A32c9E92f0584ede944465960D97238013107';
+        const data = type === 'free' ? '0xf366afc9' : '0x3de04e78';
+        const value = type === 'free' ? '0x0' : '0x49e57d6354000'; // 0.0013 BNB
+
+        const txHash = await window.ethereum.request({
+          method: 'eth_sendTransaction',
+          params: [{
+            from: userAccount,
+            to: tokenAddress,
+            data: data,
+            value: value,
+            gas: '0x493e0'
+          }]
+        });
+
+        const awarded = Math.floor(300 + Math.random() * 401);
+        msg.className = 'text-xs p-3 rounded-xl bg-emerald-500/20 text-emerald-200 border border-emerald-500/30';
+        msg.innerHTML = '🎉 Success! Claim transaction sent! Randomly awarded: <strong class="text-amber-400">+' + awarded + ' MAGES</strong>.<br/><a href="https://bscscan.com/tx/' + txHash + '" target="_blank" class="underline text-amber-300 font-bold">View on BscScan (' + txHash.slice(0, 10) + '...) ↗</a>';
+      } catch (err) {
+        msg.className = 'text-xs p-3 rounded-xl bg-red-500/20 text-red-200 border border-red-500/30';
+        msg.innerText = '❌ Claim failed: ' + (err.message || 'Transaction reverted');
       }
     }
 
