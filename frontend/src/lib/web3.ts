@@ -477,7 +477,7 @@ export async function fetchMagesClaimStatus(walletAddress?: string | null): Prom
     const remainingPaid = Math.max(0, maxPaidNum - paidCompNum);
     const freeRewardNum = Number(freeReward / BigInt(1e18)) || 400;
     const paidRewardNum = Number(paidReward / BigInt(1e18)) || 500;
-    const paidPriceBNB = (Number(paidPrice) / 1e18).toFixed(4);
+    const paidClaimPriceBNB = (Number(paidPrice) / 1e18).toFixed(4);
     const distributorMages = (distMagesBal / BigInt(1e18)).toString();
 
     let nftBalance = 0;

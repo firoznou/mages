@@ -51,8 +51,8 @@ export default function Footer() {
               <li><Link href="/mint" className="hover:text-white transition">Minting Portal</Link></li>
               <li><Link href="/presale" className="hover:text-white transition">MAGES Presale</Link></li>
               <li><Link href="/tokenomics" className="hover:text-white transition">MAGES Tokenomics</Link></li>
+              <li><Link href="/rewards" className="hover:text-white transition">Token Claiming (Fixed)</Link></li>
               <li><Link href="/airdrop" className="hover:text-white transition">Holder Airdrop</Link></li>
-              <li><Link href="/rewards" className="hover:text-white transition">Random Rewards</Link></li>
             </ul>
           </div>
 
@@ -88,6 +88,21 @@ export default function Footer() {
                   title="View MAGES Token on BscScan"
                 >
                   {CONTRACT_ADDRESSES.TOKEN}
+                </a>
+              </div>
+              <div className="p-2.5 rounded-lg bg-[#0E071A] border border-[#2E1B4E]/60">
+                <div className="text-gray-400 flex justify-between">
+                  <span>MAGES Distributor:</span>
+                  <span className="text-amber-400">Fixed Claims</span>
+                </div>
+                <a
+                  href={`https://bscscan.com/address/${CONTRACT_ADDRESSES.DISTRIBUTOR}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-white hover:text-[#F59E0B] truncate block transition"
+                  title="View MAGES Distributor on BscScan"
+                >
+                  {CONTRACT_ADDRESSES.DISTRIBUTOR}
                 </a>
               </div>
               <div className="p-2.5 rounded-lg bg-[#0E071A] border border-[#2E1B4E]/60">

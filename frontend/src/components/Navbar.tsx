@@ -78,11 +78,11 @@ export default function Navbar() {
     { name: 'Home', href: '/' },
     { name: 'Collection', href: '/collection' },
     { name: 'Mint', href: '/mint', badge: 'Live' },
+    { name: 'Token Claiming', href: '/rewards', badge: 'Live' },
     { name: 'Gift Drop', href: '/mint#gift', badge: '🎁' },
     { name: 'Presale', href: '/presale', badge: 'After Sellout' },
     { name: 'MAGES Token', href: '/tokenomics' },
     { name: 'Airdrop', href: '/airdrop' },
-    { name: 'Rewards', href: '/rewards' },
     { name: 'Marketplace', href: '/marketplace' }
   ];
 
@@ -120,7 +120,7 @@ export default function Navbar() {
                   <Link
                     key={link.name}
                     href={link.href}
-                    className={`px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 relative group flex items-center gap-1.5 ${
+                    className={`px-2.5 xl:px-3 py-1.5 xl:py-2 rounded-lg text-xs xl:text-sm font-medium transition-all duration-200 relative group flex items-center gap-1.5 ${
                       isActive
                         ? 'text-white bg-[#160D27] border border-[#7928CA]/50 shadow-[0_0_15px_rgba(121,40,202,0.3)]'
                         : 'text-[#9CA3AF] hover:text-white hover:bg-[#160D27]/60'
