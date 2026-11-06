@@ -134,7 +134,6 @@ export default function MintPage() {
       provider.request({ method: 'eth_accounts' }).then((accounts: string[]) => {
         if (accounts && accounts[0]) {
           setWallet(accounts[0]);
-          setGiftWalletAddress(accounts[0]);
           verifyEligibility(accounts[0]);
           loadUserMages(accounts[0]);
         }
@@ -171,7 +170,6 @@ export default function MintPage() {
         const accounts = await provider.request({ method: 'eth_requestAccounts' });
         if (accounts && accounts[0]) {
           setWallet(accounts[0]);
-          setGiftWalletAddress(accounts[0]);
           await verifyEligibility(accounts[0]);
           await loadUserMages(accounts[0]);
         }
@@ -1017,17 +1015,14 @@ print(f'Agent ID Free Mint Tx: {tx_hash_free.hex()}')`;
                   <input
                     type="text"
                     required
-                    placeholder="0x..."
+                    placeholder="Enter BSC wallet address holding MAGES tokens (0x...)"
                     value={giftWalletAddress}
                     onChange={(e) => setGiftWalletAddress(e.target.value)}
                     className="w-full px-4 py-3 rounded-xl bg-[#090514] border border-[#2E1B4E] text-white font-mono text-xs focus:outline-none focus:border-[#F59E0B]"
                   />
-                  {wallet && (
-                    <div className="text-[10px] text-gray-400 mt-1 flex items-center justify-between">
-                      <span>Detected: {formatAddress(wallet)}</span>
-                      <span className="text-[#F59E0B] font-mono">Holding: {userMagesBalance} MAGES</span>
-                    </div>
-                  )}
+                  <div className="text-[10px] text-gray-500 mt-1">
+                    Enter the BSC wallet address holding your MAGES tokens or WeZards NFT proof
+                  </div>
                 </div>
 
                 {/* 2. Twitter Post URL */}

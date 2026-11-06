@@ -246,7 +246,6 @@ export function renderPortalFallback(pathname: string): Response {
             const short = userAccount.slice(0, 6) + '...' + userAccount.slice(-4);
             document.getElementById('walletAddressDisplay').innerText = short;
             document.getElementById('connectWalletBtn').innerText = short;
-            document.getElementById('giftWallet').value = userAccount;
             document.getElementById('eligibilityStatus').innerText = 'Agentic Wallet Verified';
             document.getElementById('eligibilityStatus').className = 'text-emerald-400 font-bold';
             document.getElementById('mintActionBtn').innerText = 'Claim Free Agentic NFT';
