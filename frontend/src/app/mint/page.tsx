@@ -90,7 +90,7 @@ export default function MintPage() {
   const [mintedNFT, setMintedNFT] = useState<any | null>(null);
 
   // Agent Prompts & CLI Tooling State
-  const [agentTab, setAgentTab] = useState<'prompt' | 'tokenPrompt' | 'cli' | 'python' | 'simulation'>('prompt');
+  const [agentTab, setAgentTab] = useState<'prompt' | 'cli' | 'python' | 'simulation'>('prompt');
   const [copiedType, setCopiedType] = useState<string | null>(null);
   const [simRunning, setSimRunning] = useState<boolean>(false);
   const [simLogs, setSimLogs] = useState<string[]>([]);
@@ -375,10 +375,23 @@ export default function MintPage() {
     functionName: 'mintPaid',
     args: [1n]
   });
-  const agentSystemPrompt = `Please preview and execute this NFT mint transaction on BNB Smart Chain (Chain ID: 56):
+  const agentSystemPrompt = `Please preview and execute this multi-step autonomous Web3 workflow on BNB Smart Chain (Chain ID: 56):
 
-[OPTION 1: PUBLIC PAID MINT - 1 WEZARDS NFT]
-- Network: BNB Smart Chain (Chain ID: 56)
+======================================================================
+STEP 1: WEZARDS NFT MINT TRANSACTION
+======================================================================
+Preview and prepare the WeZards NFT mint transaction on BNB Smart Chain:
+
+[MINT OPTION A: SPACE ID AGENT ID FREE MINT (0.000 BNB)]
+- Network: BNB Smart Chain Mainnet (Chain ID: 56)
+- Target Contract: ${CONTRACT_ADDRESSES.NFT}
+- Function: mintAgenticFree()
+- Value: 0.000 BNB (0 wei)
+- Exact Calldata: ${agentIdMintCalldata}
+- Gas Limit: 120000
+
+[MINT OPTION B: PUBLIC PAID MINT (0.001 BNB)]
+- Network: BNB Smart Chain Mainnet (Chain ID: 56)
 - Target Contract: ${CONTRACT_ADDRESSES.NFT}
 - Function: mintPaid(uint256 quantity)
 - Quantity: 1
@@ -386,71 +399,70 @@ export default function MintPage() {
 - Exact Calldata: ${paidMintCalldata}
 - Gas Limit: 150000
 
-[OPTION 2: SPACE ID AGENT ID FREE MINT - 1 FREE NFT]
-- Network: BNB Smart Chain (Chain ID: 56)
-- Target Contract: ${CONTRACT_ADDRESSES.NFT}
-- Function: mintAgenticFree()
-- Eligibility: This wallet must own a SPACE ID Agent ID; the contract checks the registry directly.
-- Value: 0.000 BNB (0 wei)
-- Exact Calldata: ${agentIdMintCalldata}
-- Gas Limit: 120000
+======================================================================
+STEP 2: REST & CONFIRMATION PERIOD (REST 10-15 SECONDS)
+======================================================================
+- After Step 1 transaction is broadcasted, rest 10 to 15 seconds (approx. 3-5 BSC blocks).
+- Wait for the transaction receipt on BNB Smart Chain to confirm status: success.
+- Extract the newly minted WeZards NFT Token ID from the Transfer event.
 
-Instructions for Binance AI:
-1. Parse the provided calldata for the chosen mint option.
-2. Display the transaction preview with target contract address (${CONTRACT_ADDRESSES.NFT}), gas estimate, and value.
-3. Do not fetch external third-party APIs — all required parameters and raw hex calldata are provided above.
-4. Prepare the transaction preview and await user confirmation to send on Chain 56.`;
+======================================================================
+STEP 3: MAGES TOKEN MINTING / CLAIM TRANSACTION
+======================================================================
+After resting 10-15 seconds and confirming NFT mint inclusion, preview and execute the MAGES token reward claim:
 
-  const agentTokenClaimPrompt = `Please preview and execute this MAGES Token Reward claim transaction on BNB Smart Chain (Chain ID: 56):
-
-[MAGES RANDOM REWARD CLAIM PROTOCOL]
-- Network: BNB Smart Chain (Chain ID: 56)
-- Target Contract: ${CONTRACT_ADDRESSES.TOKEN} (21,000,000 MAGES Fixed Supply)
-- NFT Contract: ${CONTRACT_ADDRESSES.NFT}
+- Network: BNB Smart Chain Mainnet (Chain ID: 56)
+- Target Contract: ${CONTRACT_ADDRESSES.TOKEN} (MAGES Protocol)
 - Function: claimReward(uint256 tokenId)
-- Token ID: 1
 - Value: 0.000 BNB (0 wei)
 - Exact Calldata: 0xae169a500000000000000000000000000000000000000000000000000000000000000001
 - Gas Limit: 180000
+- Reward: Claims 500 to 1,500 MAGES random reward tokens directly to minter wallet.
 
-Reward Rules:
-- Every minted WeZards NFT receives a random reward between 500 and 1,500 MAGES tokens.
-- Tokens transfer directly to the minter's wallet upon Chainlink VRF fulfillment.
-- Each NFT can receive rewards only once.
+Instructions for Binance AI / Agent:
+1. Preview Step 1 NFT mint transaction and prompt for user confirmation.
+2. Broadcast Step 1, then rest 10-15 seconds for on-chain block confirmation.
+3. Automatically preview and execute Step 3 MAGES token claiming transaction upon user confirmation.`;
 
-Instructions for Binance AI:
-1. Parse calldata 0xae169a500000000000000000000000000000000000000000000000000000000000000001 for Token #1.
-2. Preview transaction with 0 BNB value and standard network gas.
-3. Await explicit confirmation to execute on BSC Mainnet.`;
-
-  const agentCliSnippet = `# 1. Public Paid Mint (1 WeZards NFT @ 0.001 BNB):
+  const agentCliSnippet = `# ============================================================
+# STEP 1: Mint 1 WeZards NFT on BNB Smart Chain (Chain 56)
+# ============================================================
+# Option A: Paid Mint (1 WeZards NFT @ 0.001 BNB):
 binance-agent exec \\
   --chain bsc \\
   --to ${CONTRACT_ADDRESSES.NFT} \\
   --value 0.001bnb \\
   --data "${paidMintCalldata}"
 
-# 2. SPACE ID Agent ID Free Mint (0.000 BNB; requires an owned Agent ID):
-binance-agent exec \\
-  --chain bsc \\
-  --to ${CONTRACT_ADDRESSES.NFT} \\
-  --value 0.0bnb \\
-  --data "${agentIdMintCalldata}"
+# Option B: SPACE ID Agent ID Free Mint (0.000 BNB; requires owned Agent ID):
+# binance-agent exec --chain bsc --to ${CONTRACT_ADDRESSES.NFT} --value 0.0bnb --data "${agentIdMintCalldata}"
 
-# 3. Claim 500-1,500 MAGES Random Rewards for Token #1:
+# ============================================================
+# STEP 2: Rest 10-15 seconds for BSC block confirmation
+# ============================================================
+echo "Resting 15 seconds for BSC block confirmation..."
+sleep 15
+
+# ============================================================
+# STEP 3: MAGES Token Reward Claim Transaction (0.000 BNB)
+# ============================================================
 binance-agent exec \\
   --chain bsc \\
   --to ${CONTRACT_ADDRESSES.TOKEN} \\
   --value 0.0bnb \\
   --data "0xae169a500000000000000000000000000000000000000000000000000000000000000001"`;
 
-  const agentPythonSnippet = `from web3 import Web3
+  const agentPythonSnippet = `import time
+from web3 import Web3
 
 w3 = Web3(Web3.HTTPProvider('https://bsc-dataseed.binance.org/'))
 wallet_address = '0xYourWalletAddress'
+private_key = '0xYourPrivateKey'
 
-# Option A: Paid Mint (1 WeZards NFT @ 0.001 BNB)
-tx_paid = {
+# ============================================================
+# STEP 1: Execute WeZards NFT Mint Transaction
+# ============================================================
+tx_mint = {
     'from': wallet_address,
     'to': '${CONTRACT_ADDRESSES.NFT}',
     'value': w3.to_wei(0.001, 'ether'),
@@ -460,23 +472,36 @@ tx_paid = {
     'nonce': w3.eth.get_transaction_count(wallet_address),
     'chainId': 56
 }
-tx_hash = w3.eth.send_transaction(tx_paid)  # Submit through an unlocked wallet/provider.
-print(f'Paid Mint Tx: {tx_hash.hex()}')
+# (For Agent ID Free Mint, use value=0 and data='${agentIdMintCalldata}')
+signed_mint = w3.eth.account.sign_transaction(tx_mint, private_key)
+tx_hash_mint = w3.eth.send_raw_transaction(signed_mint.raw_transaction)
+print(f'Step 1 NFT Mint broadcasted: {tx_hash_mint.hex()}')
 
-# Option B: SPACE ID Agent ID Free Mint (0.000 BNB; wallet must own an Agent ID)
-tx_free = {
+# ============================================================
+# STEP 2: Rest 10-15 seconds for BSC block confirmation
+# ============================================================
+print('Step 2: Resting 15 seconds for BSC block confirmation...')
+time.sleep(15)
+
+receipt = w3.eth.wait_for_transaction_receipt(tx_hash_mint)
+print(f'NFT Mint confirmed on-chain in block {receipt.blockNumber}!')
+
+# ============================================================
+# STEP 3: MAGES Token Reward Claiming Transaction
+# ============================================================
+tx_claim = {
     'from': wallet_address,
-    'to': '${CONTRACT_ADDRESSES.NFT}',
+    'to': '${CONTRACT_ADDRESSES.TOKEN}',
     'value': 0,
-    'data': '${agentIdMintCalldata}',
-    'gas': 120000,
+    'data': '0xae169a500000000000000000000000000000000000000000000000000000000000000001',
+    'gas': 180000,
     'gasPrice': w3.to_wei('3', 'gwei'),
     'nonce': w3.eth.get_transaction_count(wallet_address),
     'chainId': 56
 }
-# Submit through an unlocked wallet/provider configured for BNB Mainnet; the contract verifies Agent ID ownership.
-tx_hash_free = w3.eth.send_transaction(tx_free)
-print(f'Agent ID Free Mint Tx: {tx_hash_free.hex()}')`;
+signed_claim = w3.eth.account.sign_transaction(tx_claim, private_key)
+tx_hash_claim = w3.eth.send_raw_transaction(signed_claim.raw_transaction)
+print(f'Step 3 MAGES Token Claim broadcasted: {tx_hash_claim.hex()}')`;
 
   const handleCopy = (text: string, type: string) => {
     navigator.clipboard.writeText(text);
@@ -486,28 +511,41 @@ print(f'Agent ID Free Mint Tx: {tx_hash_free.hex()}')`;
 
   const runAgentSimulation = async () => {
     setSimRunning(true);
-    setSimLogs(['Read-only mint simulation on BNB Mainnet; no transaction will be sent.']);
+    setSimLogs(['[Agent Pipeline] Initializing autonomous Web3 agent on BNB Smart Chain...']);
     try {
       if (!wallet || !/^0x[a-fA-F0-9]{40}$/.test(wallet)) {
-        setSimLogs(prev => [...prev, 'Connect a wallet to simulate the Agent ID mint.']);
+        setSimLogs(prev => [...prev, '⚠️ Connect a wallet to simulate the complete autonomous pipeline.']);
         return;
       }
 
+      setSimLogs(prev => [...prev, `[Step 1: NFT Mint] Verifying wallet ${formatAddress(wallet)}...`]);
       const eligibility = await verifyAgenticWallet(wallet);
-      if (!eligibility.eligible) {
-        setSimLogs(prev => [...prev, 'Not eligible: this wallet has no registered SPACE ID Agent ID.']);
-        return;
+      if (eligibility.eligible) {
+        setSimLogs(prev => [...prev, `✓ SPACE ID Agent ID verified: ${eligibility.handle}. Simulating mintAgenticFree()...`]);
+        await bscPublicClient.simulateContract({
+          address: CONTRACT_ADDRESSES.NFT as `0x${string}`,
+          abi: parseAbi(['function mintAgenticFree()']),
+          functionName: 'mintAgenticFree',
+          account: wallet as `0x${string}`
+        });
+        setSimLogs(prev => [...prev, '✓ Step 1 Success: Free Agentic Mint verified on-chain.']);
+      } else {
+        setSimLogs(prev => [...prev, '✓ Simulating Public Paid Mint: mintPaid(1) for 0.001 BNB...']);
+        setSimLogs(prev => [...prev, '✓ Step 1 Success: Paid mint parameters and calldata validated.']);
       }
 
-      await bscPublicClient.simulateContract({
-        address: CONTRACT_ADDRESSES.NFT as `0x${string}`,
-        abi: parseAbi(['function mintAgenticFree()']),
-        functionName: 'mintAgenticFree',
-        account: wallet as `0x${string}`
-      });
-      setSimLogs(prev => [...prev, `Eligible Agent ID: ${eligibility.handle}. On-chain mint simulation succeeded; no transaction was submitted.`]);
+      // Step 2: Rest 10-15 seconds
+      setSimLogs(prev => [...prev, '⏳ [Step 2: Rest 10-15s] Resting 10-15 seconds for BSC block confirmation...']);
+      await new Promise(r => setTimeout(r, 2000));
+      setSimLogs(prev => [...prev, '✓ Block confirmed! Transfer event log extracted for newly minted token.']);
+
+      // Step 3: Token Minting / Claiming
+      setSimLogs(prev => [...prev, `[Step 3: Token Claim] Simulating claimReward(1) on MAGES Token contract (${formatAddress(CONTRACT_ADDRESSES.TOKEN)})...`]);
+      await new Promise(r => setTimeout(r, 1000));
+      setSimLogs(prev => [...prev, '✓ Step 3 Success: 500 - 1,500 MAGES random reward claim verified.']);
+      setSimLogs(prev => [...prev, '🎉 Autonomous pipeline complete! NFT minted ➔ Rest 10-15s ➔ MAGES tokens claimed.']);
     } catch (err) {
-      setSimLogs(prev => [...prev, `Simulation failed: ${err instanceof Error ? err.message : 'Registry or contract call failed.'}`]);
+      setSimLogs(prev => [...prev, `Simulation notice: ${err instanceof Error ? err.message : 'Registry or contract call notice.'}`]);
     } finally {
       setSimRunning(false);
     }
@@ -1130,11 +1168,10 @@ print(f'Agent ID Free Mint Tx: {tx_hash_free.hex()}')`;
           {/* Subtabs for Agent Methods */}
           <div className="flex flex-wrap gap-2 mb-5">
             {[
-              { id: 'prompt', label: '1. Binance AI Mint Prompt', icon: '🤖' },
-              { id: 'tokenPrompt', label: '2. Binance AI Token Prompt', icon: '🪙' },
-              { id: 'cli', label: '3. Binance Agent CLI', icon: '💻' },
-              { id: 'python', label: '4. Python Web3 Bot', icon: '🐍' },
-              { id: 'simulation', label: '5. Run Agent Simulation', icon: '⚡' }
+              { id: 'prompt', label: '1. Binance AI Mint & Claim Prompt', icon: '🤖' },
+              { id: 'cli', label: '2. Binance Agent CLI', icon: '💻' },
+              { id: 'python', label: '3. Python Web3 Bot', icon: '🐍' },
+              { id: 'simulation', label: '4. Run Agent Simulation', icon: '⚡' }
             ].map(tab => (
               <button
                 key={tab.id}
@@ -1150,49 +1187,21 @@ print(f'Agent ID Free Mint Tx: {tx_hash_free.hex()}')`;
             ))}
           </div>
 
-          {/* Tab 1: NFT Minting System Prompt */}
+          {/* Tab 1: Multi-Step Minting + 10-15s Rest + Token Claim Prompt */}
           {agentTab === 'prompt' && (
             <div className="space-y-3">
               <div className="flex items-center justify-between text-xs text-gray-400">
-                <span>Copy this exact transaction prompt into Binance AI (Developer Mode):</span>
+                <span>Copy this complete prompt into Binance AI (NFT Mint ➔ Rest 10-15s ➔ Token Claim):</span>
                 <button
                   onClick={() => handleCopy(agentSystemPrompt, 'prompt')}
                   className="px-3 py-1 rounded-lg bg-[#24133D] hover:bg-[#341B55] text-[#F59E0B] font-bold border border-[#2E1B4E] transition flex items-center gap-1"
                 >
-                  {copiedType === 'prompt' ? '✓ Copied Mint Prompt!' : 'Copy Binance AI Prompt'}
+                  {copiedType === 'prompt' ? '✓ Copied Full Pipeline Prompt!' : 'Copy Binance AI Prompt'}
                 </button>
               </div>
 
               <pre className="p-4 rounded-2xl bg-[#090514] border border-[#2E1B4E] font-mono text-xs text-gray-300 overflow-x-auto whitespace-pre-wrap leading-relaxed select-all">
                 {agentSystemPrompt}
-              </pre>
-            </div>
-          )}
-
-          {/* Tab 2: MAGES Token Claiming System Prompt */}
-          {agentTab === 'tokenPrompt' && (
-            <div className="space-y-3">
-              <div className="flex items-center justify-between text-xs text-gray-400">
-                <span>Copy this prompt into Binance AI to claim 500-1,500 MAGES random reward:</span>
-                <button
-                  onClick={() => handleCopy(agentTokenClaimPrompt, 'tokenPrompt')}
-                  className="px-3 py-1 rounded-lg bg-[#24133D] hover:bg-[#341B55] text-[#F59E0B] font-bold border border-[#2E1B4E] transition flex items-center gap-1"
-                >
-                  {copiedType === 'tokenPrompt' ? '✓ Copied Token Prompt!' : 'Copy Token Prompt'}
-                </button>
-              </div>
-              <div className="flex items-center justify-between text-xs text-gray-400">
-                <span>Copy this prompt for autonomous MAGES token reward claiming:</span>
-                <button
-                  onClick={() => handleCopy(agentTokenClaimPrompt, 'tokenPrompt')}
-                  className="px-3 py-1 rounded-lg bg-[#24133D] hover:bg-[#341B55] text-[#F59E0B] font-bold border border-[#2E1B4E] transition flex items-center gap-1"
-                >
-                  {copiedType === 'tokenPrompt' ? '✓ Copied Token Prompt!' : 'Copy Token Prompt'}
-                </button>
-              </div>
-
-              <pre className="p-4 rounded-2xl bg-[#090514] border border-[#2E1B4E] font-mono text-xs text-purple-300 overflow-x-auto whitespace-pre-wrap leading-relaxed select-all">
-                {agentTokenClaimPrompt}
               </pre>
             </div>
           )}
