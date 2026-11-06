@@ -4,6 +4,8 @@ export function renderPortalFallback(pathname: string): Response {
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="icon" href="https://assets.bunink.xyz/images/1.png" type="image/png" />
+  <link rel="apple-touch-icon" href="https://assets.bunink.xyz/images/1.png" />
   <title>WeZards - Magical Web3 Ecosystem | 5,000 NFTs & MAGES Token on BSC</title>
   <meta name="description" content="5,000 unique wizard NFTs and 21M fixed MAGES tokens on BNB Smart Chain. Agentic free minting, verifiable random rewards." />
   <script src="https://cdn.tailwindcss.com"></script>
@@ -25,10 +27,8 @@ export function renderPortalFallback(pathname: string): Response {
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <div class="flex items-center justify-between h-20">
         <a class="flex items-center gap-3" href="/">
-          <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-[#7928CA] via-[#9333EA] to-[#F59E0B] p-[2px]">
-            <div class="w-full h-full bg-[#090514] rounded-[10px] flex items-center justify-center">
-              <span class="text-xl font-black text-[#F59E0B]">W</span>
-            </div>
+          <div class="w-11 h-11 rounded-xl bg-gradient-to-tr from-[#7928CA] via-[#9333EA] to-[#F59E0B] p-[2px] shadow-[0_0_15px_rgba(245,158,11,0.25)]">
+            <img src="https://assets.bunink.xyz/images/1.png" alt="WeZards Logo" class="w-full h-full rounded-[9px] bg-[#090514] object-contain p-0.5" style="image-rendering: pixelated;" />
           </div>
           <div>
             <span class="text-2xl font-extrabold tracking-wider bg-clip-text text-transparent bg-gradient-to-r from-white via-[#F3F4F6] to-[#C084FC]">WeZards</span>
@@ -146,14 +146,28 @@ export function renderPortalFallback(pathname: string): Response {
         </div>
       </div>
 
-      <div class="bg-[#080314]/70 border border-[#2E1B4E] rounded-2xl p-4 mb-6 text-xs text-gray-300 space-y-2">
-        <p class="font-bold text-white">How to qualify for the Minting Gift:</p>
-        <ol class="list-decimal pl-4 space-y-1 text-gray-400">
-          <li>Post on X (Twitter) with hashtags: <code class="text-amber-300 bg-[#160D27] px-1.5 py-0.5 rounded font-mono">#agentID #lfg #wezards</code></li>
-          <li>Include our official portal link: <code class="text-purple-300 bg-[#160D27] px-1.5 py-0.5 rounded font-mono">https://wezards.bunink.xyz/</code></li>
-          <li>Enter your BNB Smart Chain wallet address below.</li>
-          <li>Upload a screenshot proof showing your held MAGES tokens or WeZards NFT!</li>
+      <div class="bg-[#080314]/70 border border-[#2E1B4E] rounded-2xl p-4 mb-6 text-xs text-gray-300 space-y-3">
+        <p class="font-bold text-white uppercase tracking-wider text-xs">Community Social Tasks Checklist:</p>
+        <ol class="list-decimal pl-4 space-y-1.5 text-gray-400">
+          <li>Follow <a href="https://x.com/nfthunter_wp" target="_blank" class="text-amber-400 font-bold hover:underline">@nfthunter_wp</a> on X (Twitter).</li>
+          <li>Like & retweet the pinned post on <a href="https://x.com/nfthunter_wp" target="_blank" class="text-amber-400 font-bold hover:underline">@nfthunter_wp</a>.</li>
+          <li>Post on X mentioning <code class="text-amber-300 bg-[#160D27] px-1.5 py-0.5 rounded font-mono">@nfthunter_wp</code> and hashtags: <code class="text-amber-300 bg-[#160D27] px-1.5 py-0.5 rounded font-mono">#agentID #lfg #wezards</code></li>
+          <li>Include our website link: <code class="text-purple-300 bg-[#160D27] px-1.5 py-0.5 rounded font-mono">https://wezards.bunink.xyz/</code></li>
+          <li>Enter your BSC wallet address holding tokens below.</li>
+          <li>Upload your holding tokens screenshot proof.</li>
         </ol>
+
+        <div class="flex flex-wrap gap-2 pt-2 border-t border-[#2E1B4E]">
+          <a href="https://x.com/nfthunter_wp" target="_blank" class="px-3.5 py-1.5 rounded-xl bg-[#24133D] hover:bg-[#341B55] border border-[#2E1B4E] text-xs text-amber-300 font-bold transition flex items-center gap-1.5">
+            Follow @nfthunter_wp ↗
+          </a>
+          <a href="https://x.com/nfthunter_wp" target="_blank" class="px-3.5 py-1.5 rounded-xl bg-[#24133D] hover:bg-[#341B55] border border-[#2E1B4E] text-xs text-purple-200 font-bold transition flex items-center gap-1.5">
+            Like & Retweet Pinned Post ❤️🔁
+          </a>
+          <a href="https://twitter.com/intent/tweet?text=Just%20joined%20the%20%40WeZards%20magical%20Web3%20ecosystem%20with%20%40nfthunter_wp%20on%20BNB%20Smart%20Chain!%20%F0%9F%A7%99%E2%80%8D%E2%99%82%EF%B8%8F%E2%9C%A8%0A%0AMinted%20NFTs%20%26%20holding%20%24MAGES%20tokens%3A%0Ahttps%3A%2F%2Fwezards.bunink.xyz%2F%0A%0A%23agentID%20%23lfg%20%23wezards%20%40nfthunter_wp" target="_blank" class="px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-black text-xs font-bold transition flex items-center gap-1.5">
+            Post on X (Tweet) 🐦
+          </a>
+        </div>
       </div>
 
       <form id="giftForm" onsubmit="submitGiftClaim(event)" class="space-y-4">

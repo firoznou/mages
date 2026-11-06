@@ -94,10 +94,13 @@ export default function Navbar() {
             
             {/* Logo */}
             <Link href="/" className="flex items-center gap-3 group">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-[#7928CA] via-[#9333EA] to-[#F59E0B] p-[2px] transition-transform group-hover:scale-105">
-                <div className="w-full h-full bg-[#090514] rounded-[10px] flex items-center justify-center">
-                  <span className="text-xl font-black text-[#F59E0B]">W</span>
-                </div>
+              <div className="w-11 h-11 rounded-xl bg-gradient-to-tr from-[#7928CA] via-[#9333EA] to-[#F59E0B] p-[2px] transition-transform group-hover:scale-105 shadow-[0_0_15px_rgba(245,158,11,0.25)]">
+                <img
+                  src="https://assets.bunink.xyz/images/1.png"
+                  alt="WeZards Logo"
+                  className="w-full h-full rounded-[9px] bg-[#090514] object-contain p-0.5 pixelated"
+                  style={{ imageRendering: 'pixelated' }}
+                />
               </div>
               <div>
                 <span className="text-2xl font-extrabold tracking-wider bg-clip-text text-transparent bg-gradient-to-r from-white via-[#F3F4F6] to-[#C084FC]">

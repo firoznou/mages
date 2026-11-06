@@ -552,7 +552,7 @@ print(f'Step 3 MAGES Token Claim broadcasted: {tx_hash_claim.hex()}')`;
   };
 
   // Pre-formatted Tweet Text for Gift Drop
-  const tweetText = `Just joined the @WeZards magical Web3 ecosystem on BNB Smart Chain! 🧙‍♂️✨\n\nMinted NFTs & holding $MAGES tokens:\nhttps://wezards.bunink.xyz/\n\n#agentID #lfg #wezards`;
+  const tweetText = `Just joined the @WeZards magical Web3 ecosystem with @nfthunter_wp on BNB Smart Chain! 🧙‍♂️✨\n\nMinted NFTs & holding $MAGES tokens:\nhttps://wezards.bunink.xyz/\n\n#agentID #lfg #wezards @nfthunter_wp`;
   const tweetIntentUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(tweetText)}`;
 
   return (
@@ -997,25 +997,94 @@ print(f'Step 3 MAGES Token Claim broadcasted: {tx_hash_claim.hex()}')`;
             <div>
               <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/20 text-[#F59E0B] text-xs font-bold uppercase tracking-wider mb-2 border border-amber-500/30">
                 <span>🎁</span>
-                <span>Community Minting Gift</span>
+                <span>Community Minting Gift & Social Tasks</span>
               </div>
               <h2 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
-                Share on X & Claim Bonus Token Gift
+                Complete Tasks on X & Claim Bonus Token Gift
               </h2>
               <p className="text-xs sm:text-sm text-gray-400 mt-1 max-w-2xl leading-relaxed">
-                Post on X (Twitter) with <span className="text-[#F59E0B] font-bold">#agentID #lfg #wezards</span> and link <span className="text-[#F59E0B] font-bold">https://wezards.bunink.xyz/</span>. Submit your token holding wallet and screenshot to claim an exclusive bonus gift recorded on Cloudflare D1.
+                Follow <a href="https://x.com/nfthunter_wp" target="_blank" rel="noopener noreferrer" className="text-amber-400 font-bold hover:underline">@nfthunter_wp</a> on X, like and retweet the pinned post, and tweet tagging <span className="text-amber-400 font-bold">@nfthunter_wp</span> with <span className="text-[#F59E0B] font-bold">#agentID #lfg #wezards</span> and link <span className="text-[#F59E0B] font-bold">https://wezards.bunink.xyz/</span>. Submit your token holding wallet and screenshot proof to claim!
               </p>
             </div>
 
             <a
-              href={tweetIntentUrl}
+              href="https://x.com/nfthunter_wp"
               target="_blank"
               rel="noopener noreferrer"
               className="px-6 py-3 rounded-xl font-bold text-xs sm:text-sm text-black bg-[#F59E0B] hover:bg-[#FBBF24] transition shadow-[0_0_20px_rgba(245,158,11,0.4)] flex items-center gap-2 whitespace-nowrap"
             >
-              <span>🐦</span>
-              <span>Post on X with #agentID</span>
+              <span>Follow @nfthunter_wp</span>
+              <span>↗</span>
             </a>
+          </div>
+
+          {/* Social Action Task Steps Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+            {/* Task 1: Follow */}
+            <div className="p-4 rounded-2xl bg-[#090514] border border-[#2E1B4E] flex flex-col justify-between">
+              <div>
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="w-6 h-6 rounded-full bg-amber-500/20 text-[#F59E0B] text-xs font-bold flex items-center justify-center border border-amber-500/30">1</span>
+                  <span className="text-xs font-bold text-white uppercase tracking-wider">Follow on X</span>
+                </div>
+                <p className="text-[11px] text-gray-400 mb-4 leading-relaxed">
+                  Follow <span className="text-amber-400 font-semibold">@nfthunter_wp</span> on X (Twitter) for official ecosystem announcements.
+                </p>
+              </div>
+              <a
+                href="https://x.com/nfthunter_wp"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-full py-2.5 px-3 rounded-xl bg-[#24133D] hover:bg-[#341B55] text-amber-300 font-bold text-xs border border-[#2E1B4E] text-center transition flex items-center justify-center gap-1.5"
+              >
+                <span>Follow @nfthunter_wp</span>
+                <span>↗</span>
+              </a>
+            </div>
+
+            {/* Task 2: Like & Retweet */}
+            <div className="p-4 rounded-2xl bg-[#090514] border border-[#2E1B4E] flex flex-col justify-between">
+              <div>
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="w-6 h-6 rounded-full bg-amber-500/20 text-[#F59E0B] text-xs font-bold flex items-center justify-center border border-amber-500/30">2</span>
+                  <span className="text-xs font-bold text-white uppercase tracking-wider">Like & Retweet</span>
+                </div>
+                <p className="text-[11px] text-gray-400 mb-4 leading-relaxed">
+                  Like and retweet the pinned post on <span className="text-amber-400 font-semibold">@nfthunter_wp</span> profile.
+                </p>
+              </div>
+              <a
+                href="https://x.com/nfthunter_wp"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-full py-2.5 px-3 rounded-xl bg-[#24133D] hover:bg-[#341B55] text-purple-200 font-bold text-xs border border-[#2E1B4E] text-center transition flex items-center justify-center gap-1.5"
+              >
+                <span>Like & Retweet Pinned Post</span>
+                <span>❤️ 🔁</span>
+              </a>
+            </div>
+
+            {/* Task 3: Post on X */}
+            <div className="p-4 rounded-2xl bg-[#090514] border border-[#2E1B4E] flex flex-col justify-between">
+              <div>
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="w-6 h-6 rounded-full bg-amber-500/20 text-[#F59E0B] text-xs font-bold flex items-center justify-center border border-amber-500/30">3</span>
+                  <span className="text-xs font-bold text-white uppercase tracking-wider">Post on X (Tweet)</span>
+                </div>
+                <p className="text-[11px] text-gray-400 mb-4 leading-relaxed">
+                  Post on X tagging <span className="text-amber-400 font-semibold">@nfthunter_wp</span> with #agentID #lfg #wezards and website URL.
+                </p>
+              </div>
+              <a
+                href={tweetIntentUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-full py-2.5 px-3 rounded-xl bg-gradient-to-r from-[#F59E0B] to-[#D97706] text-black font-bold text-xs text-center transition hover:brightness-110 flex items-center justify-center gap-1.5 shadow-md"
+              >
+                <span>Post on X (Tweet)</span>
+                <span>🐦</span>
+              </a>
+            </div>
           </div>
 
           {/* Tweet Preview */}
@@ -1077,7 +1146,7 @@ print(f'Step 3 MAGES Token Claim broadcasted: {tx_hash_claim.hex()}')`;
                     className="w-full px-4 py-3 rounded-xl bg-[#090514] border border-[#2E1B4E] text-white font-mono text-xs focus:outline-none focus:border-[#F59E0B]"
                   />
                   <div className="text-[10px] text-gray-400 mt-1">
-                    Must include #agentID #lfg #wezards and https://wezards.bunink.xyz/
+                    Must include @nfthunter_wp, #agentID #lfg #wezards, and https://wezards.bunink.xyz/
                   </div>
                 </div>
 

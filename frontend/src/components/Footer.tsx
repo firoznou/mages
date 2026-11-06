@@ -12,22 +12,34 @@ export default function Footer() {
           
           {/* Brand Info */}
           <div className="lg:col-span-2">
-            <Link href="/" className="flex items-center gap-3 mb-4">
-              <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-[#7928CA] to-[#F59E0B] p-[2px]">
-                <div className="w-full h-full bg-[#090514] rounded-[10px] flex items-center justify-center">
-                  <span className="text-lg font-black text-[#F59E0B]">W</span>
-                </div>
+            <Link href="/" className="flex items-center gap-3 mb-4 group">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-[#7928CA] to-[#F59E0B] p-[2px] shadow-[0_0_15px_rgba(245,158,11,0.2)] transition-transform group-hover:scale-105">
+                <img
+                  src="https://assets.bunink.xyz/images/1.png"
+                  alt="WeZards Logo"
+                  className="w-full h-full rounded-[9px] bg-[#090514] object-contain p-0.5 pixelated"
+                  style={{ imageRendering: 'pixelated' }}
+                />
               </div>
               <span className="text-2xl font-extrabold text-white tracking-wider">WeZards</span>
             </Link>
             <p className="text-sm text-[#9CA3AF] max-w-sm mb-6 leading-relaxed">
               The premier fantasy wizard Web3 ecosystem on BNB Smart Chain. 5,000 retro 8-bit collectible NFTs, fixed-cap MAGES tokenomics, and decentralized presale protocols.
             </p>
-            <div className="flex items-center gap-3">
+            <div className="flex flex-wrap items-center gap-3">
               <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-[#160D27] border border-[#2E1B4E] text-amber-400">
                 <span className="w-2 h-2 rounded-full bg-emerald-400"></span>
                 BNB Smart Chain (ChainID: 56)
               </span>
+              <a
+                href="https://x.com/nfthunter_wp"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-[#24133D] hover:bg-[#341B55] border border-[#2E1B4E] text-purple-200 transition"
+              >
+                <span>X / Twitter</span>
+                <span>@nfthunter_wp ↗</span>
+              </a>
             </div>
           </div>
 
