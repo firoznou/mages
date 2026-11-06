@@ -13,6 +13,8 @@ export const ASSET_BASE_URLS = {
   METADATA: 'https://assets.bunink.xyz/metadata'
 };
 
+export const ELEMENT_MARKETPLACE_URL = 'https://element.market/collections/wezards-3';
+
 export const bscPublicClient = createPublicClient({
   chain: bsc,
   transport: fallback([
