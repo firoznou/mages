@@ -33,5 +33,8 @@
     "binance-agentic-wallet"
   ],
   "author": "WeZards Core Architecture Team",
-  "license": "MIT"
+  "license": "MIT",
+  "devDependencies": {
+    "wrangler": "^4.158.0"
+  }
 }
