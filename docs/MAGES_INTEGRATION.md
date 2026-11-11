@@ -12,7 +12,7 @@
 | **MAGES ERC-20** | `0xE12A32c9E92f0584ede944465960D97238013107` | [BscScan](https://bscscan.com/token/0xE12A32c9E92f0584ede944465960D97238013107) | 18 decimals, fixed supply caps |
 | **WeZards ERC-721** | `0xe4d7Ec33Fcf7D93cBE7F4D46d0ef35F437956aab` | [BscScan](https://bscscan.com/token/0xe4d7Ec33Fcf7D93cBE7F4D46d0ef35F437956aab) | Max supply 5,000, 2,556 minted |
 | **MAGES Airdrop** | `0x7B88a86FAf66ea06df05A89EEda19B09A9C4b90B` | [BscScan](https://bscscan.com/address/0x7B88a86FAf66ea06df05A89EEda19B09A9C4b90B) | Merkle proof verification contract |
-| **MAGES Presale** | `0x3D8e948618B55b343ea1397D8CBc5276e8B9FC75` | [BscScan](https://bscscan.com/address/0x3D8e948618B55b343ea1397D8CBc5276e8B9FC75) | Chainlink oracle integrated BNB & USDT purchases |
+| **MAGES Presale** | `0x5D1A644eb3e797fdCb99f5c2d39C196A16d233Eb` | [BscScan](https://bscscan.com/address/0x5D1A644eb3e797fdCb99f5c2d39C196A16d233Eb) | Chainlink oracle integrated BNB & USDT purchases |
 | **Chainlink BNB/USD** | `0x0567F2323251f0Aab15c8dFb1967E4e8A7D42aeE` | [BscScan](https://bscscan.com/address/0x0567F2323251f0Aab15c8dFb1967E4e8A7D42aeE) | Official BSC aggregator (8 decimals) |
 | **Chainlink USDT/USD** | `0xB97Ad0E74fa7d920791E90258A6E2085088b4320` | [BscScan](https://bscscan.com/address/0xB97Ad0E74fa7d920791E90258A6E2085088b4320) | Official BSC aggregator (8 decimals) |
 | **USDT Token (BSC)** | `0x55d398326f99059fF775485246999027B3197955` | [BscScan](https://bscscan.com/token/0x55d398326f99059fF775485246999027B3197955) | 18 decimals on BNB Smart Chain |
@@ -91,3 +91,4 @@ To initialize or administer the contracts, connect to `/admin/mages` using the o
 - `scripts/generate-snapshot.js`: Queries the official WeZards NFT contract on BSC Mainnet via multicall to generate `snapshot_phase_a.json`.
 - `scripts/build-merkle-registry.js`: Builds the OpenZeppelin-compatible Merkle tree and generates proof lookups for all snapshot wallets.
 - `scripts/generate-phase-b.js`: Incrementally processes future minters, checks the permanent token registry to prevent duplicate claims, and generates epoch Merkle roots.
+

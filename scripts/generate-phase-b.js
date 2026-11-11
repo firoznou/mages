@@ -199,3 +199,4 @@ const fromId = parseInt(args[1] || '2557', 10);
 const toId = parseInt(args[2] || '2600', 10);
 
 generateEpoch(epoch, fromId, toId).catch(console.error);
+
