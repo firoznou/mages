@@ -28,6 +28,7 @@ module.exports = {
       animation: {
         'float': 'float 4s ease-in-out infinite',
         'pulse-glow': 'pulseGlow 2.5s ease-in-out infinite',
+        'fadeIn': 'fadeIn 0.3s ease-out forwards',
       },
       keyframes: {
         float: {
@@ -37,6 +38,10 @@ module.exports = {
         pulseGlow: {
           '0%, 100%': { opacity: '0.6', filter: 'drop-shadow(0 0 15px rgba(121, 40, 202, 0.6))' },
           '50%': { opacity: '1', filter: 'drop-shadow(0 0 25px rgba(245, 158, 11, 0.8))' },
+        },
+        fadeIn: {
+          '0%': { opacity: '0', transform: 'translateY(6px)' },
+          '100%': { opacity: '1', transform: 'translateY(0)' },
         }
       }
     },

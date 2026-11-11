@@ -9,6 +9,11 @@ export const MAGES_AIRDROP_ADDRESS = (
 
 export const REWARD_PER_NFT = 1000n * 10n ** 18n; // 1,000 MAGES in 18 decimals
 
+export function isValidEVMAddress(address: string | null | undefined): boolean {
+  if (!address) return false;
+  return /^0x[a-fA-F0-9]{40}$/.test(address.trim());
+}
+
 export interface AirdropTokenClaim {
   tokenId: number;
   phase: number;

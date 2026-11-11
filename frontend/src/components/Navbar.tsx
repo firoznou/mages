@@ -5,7 +5,7 @@ import { createPortal } from 'react-dom';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { verifyAgenticWallet } from '../lib/api';
-import { formatAddress } from '../lib/web3';
+import { formatAddress, getWalletProvider } from '../lib/web3';
 
 export default function Navbar() {
   const pathname = usePathname();
@@ -20,10 +20,26 @@ export default function Navbar() {
 
   useEffect(() => {
     setMounted(true);
-    if (typeof window !== 'undefined' && (window as any).ethereum?.selectedAddress) {
-      const addr = (window as any).ethereum.selectedAddress;
-      setAddress(addr);
-      checkAgenticEligibility(addr);
+    if (typeof window !== 'undefined') {
+      const provider = getWalletProvider();
+      if (provider) {
+        provider.request?.({ method: 'eth_accounts' }).then((accounts: string[]) => {
+          if (accounts && accounts[0]) {
+            setAddress(accounts[0]);
+            checkAgenticEligibility(accounts[0]);
+          }
+        }).catch(() => {});
+
+        const handleAccounts = (accs: string[]) => {
+          const a = accs[0] || null;
+          setAddress(a);
+          if (a) checkAgenticEligibility(a);
+        };
+        provider.on?.('accountsChanged', handleAccounts);
+        return () => {
+          provider.removeListener?.('accountsChanged', handleAccounts);
+        };
+      }
     }
   }, []);
 
@@ -40,7 +56,7 @@ export default function Navbar() {
     try {
       setIsConnecting(true);
 
-      const provider = (window as any).BinanceChain || (window as any).ethereum;
+      const provider = getWalletProvider();
       if (!provider) {
         throw new Error('No compatible wallet extension was found.');
       }

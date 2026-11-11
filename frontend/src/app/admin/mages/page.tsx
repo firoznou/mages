@@ -10,7 +10,8 @@ import {
   MagesAirdropStats,
   MagesPresaleStats,
   sendWalletContractTransaction,
-  bscPublicClient
+  bscPublicClient,
+  getWalletProvider
 } from '@/lib/web3';
 import { phaseASummary } from '@/lib/merkleEngine';
 import { encodeFunctionData, parseAbi } from 'viem';
@@ -127,7 +128,7 @@ export default function AdminMagesPage() {
   // Check connected wallet
   const checkWallet = useCallback(async () => {
     if (typeof window === 'undefined') return;
-    const provider = (window as any).ethereum;
+    const provider = getWalletProvider();
     if (!provider) return;
 
     try {
@@ -144,9 +145,9 @@ export default function AdminMagesPage() {
 
   const connectWallet = async () => {
     if (typeof window === 'undefined') return;
-    const provider = (window as any).ethereum;
+    const provider = getWalletProvider();
     if (!provider) {
-      alert('Please install MetaMask or a compatible EVM Web3 wallet.');
+      alert('Please install Binance Agentic Wallet or MetaMask.');
       return;
     }
     try {
@@ -184,15 +185,18 @@ export default function AdminMagesPage() {
     loadData();
     checkWallet();
 
-    if (typeof window !== 'undefined' && (window as any).ethereum) {
-      const handleAccounts = (accs: string[]) => setAddress(accs[0] || null);
-      const handleChain = (c: string) => setChainId(Number(BigInt(c)));
-      (window as any).ethereum.on?.('accountsChanged', handleAccounts);
-      (window as any).ethereum.on?.('chainChanged', handleChain);
-      return () => {
-        (window as any).ethereum.removeListener?.('accountsChanged', handleAccounts);
-        (window as any).ethereum.removeListener?.('chainChanged', handleChain);
-      };
+    if (typeof window !== 'undefined') {
+      const provider = getWalletProvider();
+      if (provider) {
+        const handleAccounts = (accs: string[]) => setAddress(accs[0] || null);
+        const handleChain = (c: string) => setChainId(Number(BigInt(c)));
+        provider.on?.('accountsChanged', handleAccounts);
+        provider.on?.('chainChanged', handleChain);
+        return () => {
+          provider.removeListener?.('accountsChanged', handleAccounts);
+          provider.removeListener?.('chainChanged', handleChain);
+        };
+      }
     }
   }, [loadData, checkWallet]);
 

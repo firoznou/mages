@@ -85,27 +85,31 @@ export default function MagesPresalePage() {
     loadStats();
 
     if (typeof window !== 'undefined') {
-      const provider = (window as any).ethereum;
-      if (provider?.selectedAddress) {
-        setAddress(provider.selectedAddress);
-        loadWalletState(provider.selectedAddress);
+      const provider = getWalletProvider();
+      if (provider) {
+        provider.request?.({ method: 'eth_accounts' }).then((accounts: string[]) => {
+          if (accounts?.[0]) {
+            setAddress(accounts[0]);
+            loadWalletState(accounts[0]);
+          }
+        }).catch(() => {});
+
+        const handleAccounts = (accs: string[]) => {
+          const a = accs[0] || null;
+          setAddress(a);
+          if (a) loadWalletState(a);
+        };
+        const handleChain = (c: string) => setChainId(Number(BigInt(c)));
+
+        provider.on?.('accountsChanged', handleAccounts);
+        provider.on?.('chainChanged', handleChain);
+        provider.request?.({ method: 'eth_chainId' }).then((c: string) => setChainId(Number(BigInt(c)))).catch(() => {});
+
+        return () => {
+          provider.removeListener?.('accountsChanged', handleAccounts);
+          provider.removeListener?.('chainChanged', handleChain);
+        };
       }
-
-      const handleAccounts = (accs: string[]) => {
-        const a = accs[0] || null;
-        setAddress(a);
-        if (a) loadWalletState(a);
-      };
-      const handleChain = (c: string) => setChainId(Number(BigInt(c)));
-
-      provider?.on?.('accountsChanged', handleAccounts);
-      provider?.on?.('chainChanged', handleChain);
-      provider?.request?.({ method: 'eth_chainId' }).then((c: string) => setChainId(Number(BigInt(c)))).catch(() => {});
-
-      return () => {
-        provider?.removeListener?.('accountsChanged', handleAccounts);
-        provider?.removeListener?.('chainChanged', handleChain);
-      };
     }
   }, [loadStats, loadWalletState]);
 

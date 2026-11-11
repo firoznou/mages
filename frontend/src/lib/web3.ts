@@ -182,9 +182,20 @@ export function formatMAGES(wei: bigint | string | number): string {
   return num.toLocaleString(undefined, { maximumFractionDigits: 0 });
 }
 
+export function isValidEVMAddress(address: string | null | undefined): boolean {
+  if (!address) return false;
+  return /^0x[a-fA-F0-9]{40}$/.test(address.trim());
+}
+
 export function getWalletProvider(): any {
   if (typeof window === 'undefined') return null;
-  return (window as any).BinanceChain || (window as any).ethereum || null;
+  return (
+    (window as any).agenticWallet ||
+    (window as any).binanceAgent ||
+    (window as any).BinanceChain ||
+    (window as any).ethereum ||
+    null
+  );
 }
 
 export async function fetchWalletMintStatus(address: string) {
