@@ -1,0 +1,11 @@
+{
+  "phase": 0,
+  "phaseName": "Phase A - Existing NFT Holders",
+  "chainId": 56,
+  "airdropContract": "0x7B88a86FAf66ea06df05A89EEda19B09A9C4b90B",
+  "merkleRoot": "0xfb347226c6c8d7e1a3d3467ef6b8ffc1c53e1b31c2fec531168e92f142db9f2c",
+  "eligibleCount": 2556,
+  "totalAllocatedMAGES": 2556000,
+  "uniqueWallets": 2528,
+  "generatedAt": "2026-11-11T17:58:40.796Z"
+}

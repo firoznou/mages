@@ -49,10 +49,11 @@ export default function Footer() {
             <ul className="space-y-2.5 text-sm">
               <li><Link href="/collection" className="hover:text-white transition">NFT Collection</Link></li>
               <li><Link href="/mint" className="hover:text-white transition">Minting Portal</Link></li>
-              <li><Link href="/presale" className="hover:text-white transition">MAGES Presale</Link></li>
-              <li><Link href="/tokenomics" className="hover:text-white transition">MAGES Tokenomics</Link></li>
+              <li><Link href="/mages/airdrop" className="hover:text-white transition text-emerald-400 font-semibold">MAGES Airdrop</Link></li>
+              <li><Link href="/mages/presale" className="hover:text-white transition text-amber-400 font-semibold">MAGES Presale</Link></li>
+              <li><Link href="/mages" className="hover:text-white transition">MAGES Dashboard</Link></li>
               <li><Link href="/rewards" className="hover:text-white transition">Token Claiming (Fixed)</Link></li>
-              <li><Link href="/airdrop" className="hover:text-white transition">Holder Airdrop</Link></li>
+              <li><Link href="/tokenomics" className="hover:text-white transition">Tokenomics</Link></li>
             </ul>
           </div>
 
@@ -92,25 +93,33 @@ export default function Footer() {
               </div>
               <div className="p-2.5 rounded-lg bg-[#0E071A] border border-[#2E1B4E]/60">
                 <div className="text-gray-400 flex justify-between">
-                  <span>MAGES Distributor:</span>
-                  <span className="text-amber-400">Fixed Claims</span>
+                  <span>MAGES Airdrop Contract:</span>
+                  <span className="text-emerald-400">4,000,000 Allocation</span>
                 </div>
                 <a
-                  href={`https://bscscan.com/address/${CONTRACT_ADDRESSES.DISTRIBUTOR}`}
+                  href={`https://bscscan.com/address/${CONTRACT_ADDRESSES.AIRDROP}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-white hover:text-[#F59E0B] truncate block transition"
-                  title="View MAGES Distributor on BscScan"
+                  className="text-white hover:text-emerald-400 truncate block transition"
+                  title="View MAGES Airdrop on BscScan"
                 >
-                  {CONTRACT_ADDRESSES.DISTRIBUTOR}
+                  {CONTRACT_ADDRESSES.AIRDROP}
                 </a>
               </div>
               <div className="p-2.5 rounded-lg bg-[#0E071A] border border-[#2E1B4E]/60">
                 <div className="text-gray-400 flex justify-between">
                   <span>MAGES Presale Contract:</span>
-                  <span className="text-purple-400">$20k Target</span>
+                  <span className="text-purple-400">$0.0034 / MAGES</span>
                 </div>
-                <div className="text-white truncate">{CONTRACT_ADDRESSES.PRESALE}</div>
+                <a
+                  href={`https://bscscan.com/address/${CONTRACT_ADDRESSES.PRESALE}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-white hover:text-purple-400 truncate block transition"
+                  title="View MAGES Presale on BscScan"
+                >
+                  {CONTRACT_ADDRESSES.PRESALE}
+                </a>
               </div>
             </div>
           </div>

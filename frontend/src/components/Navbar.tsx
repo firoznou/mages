@@ -78,11 +78,10 @@ export default function Navbar() {
     { name: 'Home', href: '/' },
     { name: 'Collection', href: '/collection' },
     { name: 'Mint', href: '/mint', badge: 'Live' },
-    { name: 'Token Claiming', href: '/rewards', badge: 'Live' },
-    { name: 'Gift Drop', href: '/mint#gift', badge: '🎁' },
-    { name: 'Presale', href: '/presale', badge: 'After Sellout' },
-    { name: 'MAGES Token', href: '/tokenomics' },
-    { name: 'Airdrop', href: '/airdrop' },
+    { name: 'MAGES Airdrop', href: '/mages/airdrop', badge: '1,000/NFT' },
+    { name: 'MAGES Presale', href: '/mages/presale', badge: '$0.0034' },
+    { name: 'MAGES Hub', href: '/mages' },
+    { name: 'Token Claiming', href: '/rewards' },
     { name: 'Marketplace', href: '/marketplace' }
   ];
 

@@ -37,15 +37,19 @@ export const bscLogClient = createPublicClient({
 export const SPACE_ID_AGENT_ID_REGISTRY = '0x60B9262456dE011F7d15a54CdD8c48bAaa8B022F';
 
 export const CONTRACT_ADDRESSES = {
-  NFT: process.env.NEXT_PUBLIC_WEZARDS_NFT_ADDRESS || '0xe4d7Ec33Fcf7D93cBE7F4D46d0ef35F437956aab',
-  TOKEN: process.env.NEXT_PUBLIC_MAGES_TOKEN_ADDRESS || '0xE12A32c9E92f0584ede944465960D97238013107',
+  NFT: process.env.NEXT_PUBLIC_WEZARDS_NFT || process.env.NEXT_PUBLIC_WEZARDS_NFT_ADDRESS || '0xe4d7Ec33Fcf7D93cBE7F4D46d0ef35F437956aab',
+  TOKEN: process.env.NEXT_PUBLIC_MAGES_TOKEN || process.env.NEXT_PUBLIC_MAGES_TOKEN_ADDRESS || '0xE12A32c9E92f0584ede944465960D97238013107',
   DISTRIBUTOR: process.env.NEXT_PUBLIC_MAGES_DISTRIBUTOR_ADDRESS || '0xbD709301473aC208f1bc4be598aE53295d311459',
   NFT_REWARDS: process.env.NEXT_PUBLIC_WEZARDS_NFT_REWARDS_ADDRESS || '0xbD709301473aC208f1bc4be598aE53295d311459',
-  PRESALE: process.env.NEXT_PUBLIC_WEZARDS_PRESALE_ADDRESS || '0x3333333333333333333333333333333333333333',
-  AIRDROP: process.env.NEXT_PUBLIC_WEZARDS_AIRDROP_ADDRESS || '0x4444444444444444444444444444444444444444',
+  PRESALE: process.env.NEXT_PUBLIC_MAGES_PRESALE || process.env.NEXT_PUBLIC_WEZARDS_PRESALE_ADDRESS || '0x3D8e948618B55b343ea1397D8CBc5276e8B9FC75',
+  AIRDROP: process.env.NEXT_PUBLIC_MAGES_AIRDROP || process.env.NEXT_PUBLIC_WEZARDS_AIRDROP_ADDRESS || '0x7B88a86FAf66ea06df05A89EEda19B09A9C4b90B',
   MARKETPLACE: process.env.NEXT_PUBLIC_WEZARDS_MARKETPLACE_ADDRESS || '0x6666666666666666666666666666666666666666',
-  CHAINLINK_BNB_USD: '0x0567F2323251f0Aab15c8dFb1967E4e8A7D42aeE',
-  SPACE_ID_AGENT_ID_REGISTRY: '0x60B9262456dE011F7d15a54CdD8c48bAaa8B022F'
+  CHAINLINK_BNB_USD: process.env.NEXT_PUBLIC_CHAINLINK_BNB_USD || '0x0567F2323251f0Aab15c8dFb1967E4e8A7D42aeE',
+  CHAINLINK_USDT_USD: process.env.NEXT_PUBLIC_CHAINLINK_USDT_USD || '0xB97Ad0E74fa7d920791E90258A6E2085088b4320',
+  USDT: process.env.NEXT_PUBLIC_USDT_TOKEN || '0x55d398326f99059fF775485246999027B3197955',
+  TREASURY: process.env.NEXT_PUBLIC_TREASURY || '0xffa81f63219c75ea7312685d85ab11A4F092Bc31',
+  SPACE_ID_AGENT_ID_REGISTRY: '0x60B9262456dE011F7d15a54CdD8c48bAaa8B022F',
+  EXPLORER: process.env.NEXT_PUBLIC_BSC_EXPLORER || 'https://bscscan.com'
 };
 
 export const WEZARDS_NFT_ABI = [
@@ -891,3 +895,516 @@ export async function fetchLiveMintActivities(limit = 25): Promise<MintActivity[
     return [];
   }
 }
+
+// ============================================================================
+//               OFFICIAL MAGES AIRDROP & PRESALE INTEGRATION
+// ============================================================================
+
+export const MAGES_AIRDROP_ABI = [
+  // User Claim functions
+  'function claimExisting(uint256 tokenId, bytes32[] calldata proof) external',
+  'function claimFuture(uint256 epoch, uint256 tokenId, bytes32[] calldata proof) external',
+
+  // View / Stats functions
+  'function EXISTING_PHASE() view returns (uint8)',
+  'function FUTURE_PHASE() view returns (uint8)',
+  'function REWARD_PER_NFT() view returns (uint256)',
+  'function MAX_ELIGIBLE_NFTS() view returns (uint256)',
+  'function MAX_AIRDROP() view returns (uint256)',
+  'function CLAIM_PERIOD() view returns (uint256)',
+  'function claimDeadline() view returns (uint256)',
+  'function eligibilityFinalized() view returns (bool)',
+  'function existingMerkleRoot() view returns (bytes32)',
+  'function existingEligibleCount() view returns (uint256)',
+  'function existingClaimedCount() view returns (uint256)',
+  'function futureEpochCount() view returns (uint256)',
+  'function futureEligibleCount() view returns (uint256)',
+  'function futureClaimedCount() view returns (uint256)',
+  'function futureMerkleRoots(uint256) view returns (bytes32)',
+  'function futureBatchCounts(uint256) view returns (uint256)',
+  'function totalEligibleNFTs() view returns (uint256)',
+  'function totalClaimed() view returns (uint256)',
+  'function remainingEligibleNFTs() view returns (uint256)',
+  'function remainingAirdropTokens() view returns (uint256)',
+  'function isTokenClaimed(uint256 tokenId) view returns (bool)',
+  'function claimedTokenId(uint256 tokenId) view returns (bool)',
+
+  // Admin & Contract State
+  'function owner() view returns (address)',
+  'function pendingOwner() view returns (address)',
+  'function acceptOwnership() external',
+  'function paused() view returns (bool)',
+  'function pause() external',
+  'function unpause() external',
+  'function setExistingRoot(bytes32 root, uint256 eligibleCount) external',
+  'function addFutureRoot(bytes32 root, uint256 batchCount) external',
+  'function finalizeEligibility() external',
+  'function withdrawUnclaimedTokens() external',
+  'function magesToken() view returns (address)',
+  'function wezardsNFT() view returns (address)',
+  'function treasury() view returns (address)'
+];
+
+export const MAGES_PRESALE_ABI = [
+  // User Purchases
+  'function buyWithBNB(uint256 minMAGESOut) external payable',
+  'function buyWithUSDT(uint256 usdtAmount, uint256 minMAGESOut) external',
+
+  // Config & Status
+  'function TOKEN_PRICE_USD() view returns (uint256)',
+  'function MIN_PURCHASE_USD() view returns (uint256)',
+  'function PRESALE_ALLOCATION() view returns (uint256)',
+  'function SALE_DURATION() view returns (uint256)',
+  'function saleStartTime() view returns (uint256)',
+  'function saleEndTime() view returns (uint256)',
+  'function saleStarted() view returns (bool)',
+  'function saleEnded() view returns (bool)',
+  'function saleActive() view returns (bool)',
+  'function saleTimeRemaining() view returns (uint256)',
+  'function tokensSold() view returns (uint256)',
+  'function remainingAllocation() view returns (uint256)',
+  'function totalBNBReceived() view returns (uint256)',
+  'function totalUSDTReceived() view returns (uint256)',
+  'function getBNBPrice() view returns (uint256)',
+  'function getUSDTPrice() view returns (uint256)',
+  'function bnbUsdFeed() view returns (address)',
+  'function usdtUsdFeed() view returns (address)',
+  'function bnbFeedDecimals() view returns (uint8)',
+  'function usdtFeedDecimals() view returns (uint8)',
+  'function usdtDecimals() view returns (uint8)',
+  'function maxPriceAge() view returns (uint256)',
+
+  // Admin Actions
+  'function owner() view returns (address)',
+  'function pendingOwner() view returns (address)',
+  'function acceptOwnership() external',
+  'function paused() view returns (bool)',
+  'function pause() external',
+  'function unpause() external',
+  'function startPresale() external',
+  'function endPresale() external',
+  'function withdrawBNB() external',
+  'function withdrawUSDT() external',
+  'function withdrawUnsoldMAGES() external',
+  'function magesToken() view returns (address)',
+  'function usdtToken() view returns (address)',
+  'function treasury() view returns (address)'
+];
+
+export const USDT_ABI = [
+  'function name() view returns (string)',
+  'function symbol() view returns (string)',
+  'function decimals() view returns (uint8)',
+  'function totalSupply() view returns (uint256)',
+  'function balanceOf(address account) view returns (uint256)',
+  'function allowance(address owner, address spender) view returns (uint256)',
+  'function approve(address spender, uint256 amount) returns (bool)',
+  'function transfer(address recipient, uint256 amount) returns (bool)'
+];
+
+export const CHAINLINK_FEED_ABI = [
+  'function latestRoundData() view returns (uint80 roundId, int256 answer, uint256 startedAt, uint256 updatedAt, uint80 answeredInRound)',
+  'function decimals() view returns (uint8)',
+  'function description() view returns (string)'
+];
+
+export interface MagesAirdropStats {
+  contractAddress: string;
+  isDeployed: boolean;
+  owner: string;
+  isPaused: boolean;
+  eligibilityFinalized: boolean;
+  claimDeadline: number;
+  rewardPerNFT: string;
+  maxEligibleNFTs: number;
+  maxDistribution: string;
+  existingRoot: string;
+  existingEligibleCount: number;
+  existingClaimedCount: number;
+  futureEpochCount: number;
+  futureEligibleCount: number;
+  futureClaimedCount: number;
+  totalEligibleNFTs: number;
+  totalClaimedNFTs: number;
+  remainingEligibleNFTs: number;
+  totalAllocatedMAGES: number;
+  totalClaimedMAGES: number;
+  remainingMAGESAllocation: number;
+  statusLabel: string;
+}
+
+export interface MagesPresaleStats {
+  contractAddress: string;
+  isDeployed: boolean;
+  owner: string;
+  treasury: string;
+  isPaused: boolean;
+  saleStarted: boolean;
+  saleEnded: boolean;
+  saleActive: boolean;
+  saleStartTime: number;
+  saleEndTime: number;
+  timeRemainingSeconds: number;
+  tokenPriceUSD: number;
+  minPurchaseUSD: number;
+  presaleAllocation: number;
+  tokensSold: number;
+  remainingAllocation: number;
+  totalBNBReceived: string;
+  totalUSDTReceived: string;
+  bnbPriceUSD: number;
+  usdtPriceUSD: number;
+  usdtDecimals: number;
+  statusLabel: 'Not Started' | 'Active' | 'Paused' | 'Ended' | 'Sold Out';
+}
+
+export async function fetchMagesAirdropStats(): Promise<MagesAirdropStats> {
+  const addr = CONTRACT_ADDRESSES.AIRDROP as `0x${string}`;
+  const abi = parseAbi(MAGES_AIRDROP_ABI);
+
+  try {
+    const [
+      owner, paused, finalized, deadline,
+      rewardWei, maxEligible, maxDistWei,
+      existingRoot, existElig, existClaimed,
+      futEpochs, futElig, futClaimed,
+      totElig, totClaimed, remElig, remTokensWei
+    ] = await Promise.all([
+      bscPublicClient.readContract({ address: addr, abi, functionName: 'owner' }).catch(() => '0x0000000000000000000000000000000000000000'),
+      bscPublicClient.readContract({ address: addr, abi, functionName: 'paused' }).catch(() => false),
+      bscPublicClient.readContract({ address: addr, abi, functionName: 'eligibilityFinalized' }).catch(() => false),
+      bscPublicClient.readContract({ address: addr, abi, functionName: 'claimDeadline' }).catch(() => 0n),
+      bscPublicClient.readContract({ address: addr, abi, functionName: 'REWARD_PER_NFT' }).catch(() => 1000n * 10n ** 18n),
+      bscPublicClient.readContract({ address: addr, abi, functionName: 'MAX_ELIGIBLE_NFTS' }).catch(() => 4000n),
+      bscPublicClient.readContract({ address: addr, abi, functionName: 'MAX_AIRDROP' }).catch(() => 4000000n * 10n ** 18n),
+      bscPublicClient.readContract({ address: addr, abi, functionName: 'existingMerkleRoot' }).catch(() => '0x0000000000000000000000000000000000000000000000000000000000000000'),
+      bscPublicClient.readContract({ address: addr, abi, functionName: 'existingEligibleCount' }).catch(() => 0n),
+      bscPublicClient.readContract({ address: addr, abi, functionName: 'existingClaimedCount' }).catch(() => 0n),
+      bscPublicClient.readContract({ address: addr, abi, functionName: 'futureEpochCount' }).catch(() => 0n),
+      bscPublicClient.readContract({ address: addr, abi, functionName: 'futureEligibleCount' }).catch(() => 0n),
+      bscPublicClient.readContract({ address: addr, abi, functionName: 'futureClaimedCount' }).catch(() => 0n),
+      bscPublicClient.readContract({ address: addr, abi, functionName: 'totalEligibleNFTs' }).catch(() => 0n),
+      bscPublicClient.readContract({ address: addr, abi, functionName: 'totalClaimed' }).catch(() => 0n),
+      bscPublicClient.readContract({ address: addr, abi, functionName: 'remainingEligibleNFTs' }).catch(() => 0n),
+      bscPublicClient.readContract({ address: addr, abi, functionName: 'remainingAirdropTokens' }).catch(() => 4000000n * 10n ** 18n)
+    ]);
+
+    const rewardNum = Number((rewardWei as bigint) / 10n ** 18n) || 1000;
+    const maxEligibleNum = Number(maxEligible as bigint) || 4000;
+    const totalEligibleNum = Number(totElig as bigint);
+    const totalClaimedNum = Number(totClaimed as bigint);
+    const remainingEligibleNum = Number(remElig as bigint);
+    const deadlineNum = Number(deadline as bigint);
+
+    let statusLabel = 'Configuring Roots';
+    if (paused) {
+      statusLabel = 'Paused';
+    } else if (deadlineNum > 0 && Date.now() / 1000 > deadlineNum) {
+      statusLabel = 'Claim Expired';
+    } else if (existingRoot !== '0x0000000000000000000000000000000000000000000000000000000000000000') {
+      statusLabel = finalized ? 'Finalized / Claims Open' : 'Phase A Active';
+    }
+
+    return {
+      contractAddress: addr,
+      isDeployed: true,
+      owner: owner as string,
+      isPaused: Boolean(paused),
+      eligibilityFinalized: Boolean(finalized),
+      claimDeadline: deadlineNum,
+      rewardPerNFT: rewardNum.toLocaleString(),
+      maxEligibleNFTs: maxEligibleNum,
+      maxDistribution: (Number((maxDistWei as bigint) / 10n ** 18n)).toLocaleString(),
+      existingRoot: existingRoot as string,
+      existingEligibleCount: Number(existElig as bigint),
+      existingClaimedCount: Number(existClaimed as bigint),
+      futureEpochCount: Number(futEpochs as bigint),
+      futureEligibleCount: Number(futElig as bigint),
+      futureClaimedCount: Number(futClaimed as bigint),
+      totalEligibleNFTs: totalEligibleNum,
+      totalClaimedNFTs: totalClaimedNum,
+      remainingEligibleNFTs: remainingEligibleNum,
+      totalAllocatedMAGES: totalEligibleNum * rewardNum,
+      totalClaimedMAGES: totalClaimedNum * rewardNum,
+      remainingMAGESAllocation: Number((remTokensWei as bigint) / 10n ** 18n),
+      statusLabel
+    };
+  } catch (err) {
+    console.warn('fetchMagesAirdropStats fallback error:', err);
+    return {
+      contractAddress: addr,
+      isDeployed: false,
+      owner: '',
+      isPaused: false,
+      eligibilityFinalized: false,
+      claimDeadline: 0,
+      rewardPerNFT: '1,000',
+      maxEligibleNFTs: 4000,
+      maxDistribution: '4,000,000',
+      existingRoot: '0x0000000000000000000000000000000000000000000000000000000000000000',
+      existingEligibleCount: 0,
+      existingClaimedCount: 0,
+      futureEpochCount: 0,
+      futureEligibleCount: 0,
+      futureClaimedCount: 0,
+      totalEligibleNFTs: 0,
+      totalClaimedNFTs: 0,
+      remainingEligibleNFTs: 0,
+      totalAllocatedMAGES: 0,
+      totalClaimedMAGES: 0,
+      remainingMAGESAllocation: 4000000,
+      statusLabel: 'Awaiting Deployment'
+    };
+  }
+}
+
+export async function fetchMagesPresaleStats(): Promise<MagesPresaleStats> {
+  const addr = CONTRACT_ADDRESSES.PRESALE as `0x${string}`;
+  const abi = parseAbi(MAGES_PRESALE_ABI);
+
+  try {
+    const [
+      owner, treasury, paused,
+      started, ended, active,
+      startTime, endTime, timeRemaining,
+      tokenPriceWei, minPurchaseWei, allocationWei,
+      soldWei, remAllocWei,
+      bnbRecWei, usdtRecWei,
+      bnbPriceRaw, usdtPriceRaw, usdtDec
+    ] = await Promise.all([
+      bscPublicClient.readContract({ address: addr, abi, functionName: 'owner' }).catch(() => '0x0000000000000000000000000000000000000000'),
+      bscPublicClient.readContract({ address: addr, abi, functionName: 'treasury' }).catch(() => '0x0000000000000000000000000000000000000000'),
+      bscPublicClient.readContract({ address: addr, abi, functionName: 'paused' }).catch(() => false),
+      bscPublicClient.readContract({ address: addr, abi, functionName: 'saleStarted' }).catch(() => false),
+      bscPublicClient.readContract({ address: addr, abi, functionName: 'saleEnded' }).catch(() => false),
+      bscPublicClient.readContract({ address: addr, abi, functionName: 'saleActive' }).catch(() => false),
+      bscPublicClient.readContract({ address: addr, abi, functionName: 'saleStartTime' }).catch(() => 0n),
+      bscPublicClient.readContract({ address: addr, abi, functionName: 'saleEndTime' }).catch(() => 0n),
+      bscPublicClient.readContract({ address: addr, abi, functionName: 'saleTimeRemaining' }).catch(() => 0n),
+      bscPublicClient.readContract({ address: addr, abi, functionName: 'TOKEN_PRICE_USD' }).catch(() => 3400000000000000n),
+      bscPublicClient.readContract({ address: addr, abi, functionName: 'MIN_PURCHASE_USD' }).catch(() => 10n * 10n ** 18n),
+      bscPublicClient.readContract({ address: addr, abi, functionName: 'PRESALE_ALLOCATION' }).catch(() => 5250000n * 10n ** 18n),
+      bscPublicClient.readContract({ address: addr, abi, functionName: 'tokensSold' }).catch(() => 0n),
+      bscPublicClient.readContract({ address: addr, abi, functionName: 'remainingAllocation' }).catch(() => 5250000n * 10n ** 18n),
+      bscPublicClient.readContract({ address: addr, abi, functionName: 'totalBNBReceived' }).catch(() => 0n),
+      bscPublicClient.readContract({ address: addr, abi, functionName: 'totalUSDTReceived' }).catch(() => 0n),
+      bscPublicClient.readContract({ address: addr, abi, functionName: 'getBNBPrice' }).catch(() => 0n),
+      bscPublicClient.readContract({ address: addr, abi, functionName: 'getUSDTPrice' }).catch(() => 0n),
+      bscPublicClient.readContract({ address: addr, abi, functionName: 'usdtDecimals' }).catch(() => 18)
+    ]);
+
+    const bnbPriceUSD = Number(bnbPriceRaw as bigint) > 0 ? Number(bnbPriceRaw as bigint) / 1e18 : 687.0;
+    const usdtPriceUSD = Number(usdtPriceRaw as bigint) > 0 ? Number(usdtPriceRaw as bigint) / 1e18 : 1.0;
+    const tokenPriceUSD = Number(tokenPriceWei as bigint) / 1e18 || 0.0034;
+    const minPurchaseUSD = Number(minPurchaseWei as bigint) / 1e18 || 10;
+    const presaleAllocation = Number((allocationWei as bigint) / 10n ** 18n) || 5250000;
+    const tokensSold = Number((soldWei as bigint) / 10n ** 18n);
+    const remainingAllocation = Number((remAllocWei as bigint) / 10n ** 18n);
+
+    let statusLabel: 'Not Started' | 'Active' | 'Paused' | 'Ended' | 'Sold Out' = 'Not Started';
+    if (paused) {
+      statusLabel = 'Paused';
+    } else if (remainingAllocation <= 0) {
+      statusLabel = 'Sold Out';
+    } else if (ended || (Number(endTime) > 0 && Date.now() / 1000 > Number(endTime))) {
+      statusLabel = 'Ended';
+    } else if (active) {
+      statusLabel = 'Active';
+    }
+
+    return {
+      contractAddress: addr,
+      isDeployed: true,
+      owner: owner as string,
+      treasury: treasury as string,
+      isPaused: Boolean(paused),
+      saleStarted: Boolean(started),
+      saleEnded: Boolean(ended),
+      saleActive: Boolean(active),
+      saleStartTime: Number(startTime),
+      saleEndTime: Number(endTime),
+      timeRemainingSeconds: Number(timeRemaining),
+      tokenPriceUSD,
+      minPurchaseUSD,
+      presaleAllocation,
+      tokensSold,
+      remainingAllocation,
+      totalBNBReceived: (Number(bnbRecWei as bigint) / 1e18).toFixed(4),
+      totalUSDTReceived: (Number(usdtRecWei as bigint) / 1e18).toFixed(2),
+      bnbPriceUSD,
+      usdtPriceUSD,
+      usdtDecimals: Number(usdtDec as number | bigint) || 18,
+      statusLabel
+    };
+  } catch (err) {
+    console.warn('fetchMagesPresaleStats fallback error:', err);
+    return {
+      contractAddress: addr,
+      isDeployed: false,
+      owner: '',
+      treasury: '',
+      isPaused: false,
+      saleStarted: false,
+      saleEnded: false,
+      saleActive: false,
+      saleStartTime: 0,
+      saleEndTime: 0,
+      timeRemainingSeconds: 0,
+      tokenPriceUSD: 0.0034,
+      minPurchaseUSD: 10,
+      presaleAllocation: 5250000,
+      tokensSold: 0,
+      remainingAllocation: 5250000,
+      totalBNBReceived: '0.0000',
+      totalUSDTReceived: '0.00',
+      bnbPriceUSD: 687.0,
+      usdtPriceUSD: 1.0,
+      usdtDecimals: 18,
+      statusLabel: 'Not Started'
+    };
+  }
+}
+
+/**
+ * Check on-chain claim status for tokens
+ */
+export async function checkOnChainTokenClaimed(tokenId: number): Promise<boolean> {
+  try {
+    const abi = parseAbi(['function isTokenClaimed(uint256) view returns (bool)']);
+    return await bscPublicClient.readContract({
+      address: CONTRACT_ADDRESSES.AIRDROP as `0x${string}`,
+      abi,
+      functionName: 'isTokenClaimed',
+      args: [BigInt(tokenId)]
+    });
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Fetch wallet's comprehensive MAGES state
+ */
+export async function fetchWalletMagesUnifiedState(walletAddress: string) {
+  if (!walletAddress || !walletAddress.startsWith('0x')) {
+    return {
+      address: null,
+      magesBalance: '0',
+      nftBalance: 0,
+      usdtBalance: '0',
+      bnbBalance: '0',
+      usdtAllowance: '0'
+    };
+  }
+
+  const target = walletAddress as `0x${string}`;
+  const erc20Abi = parseAbi([
+    'function balanceOf(address) view returns (uint256)',
+    'function allowance(address, address) view returns (uint256)',
+    'function decimals() view returns (uint8)'
+  ]);
+  const nftAbi = parseAbi(['function balanceOf(address) view returns (uint256)']);
+
+  const [magesBal, nftBal, bnbWei, usdtBal, usdtAllow] = await Promise.all([
+    bscPublicClient.readContract({
+      address: CONTRACT_ADDRESSES.TOKEN as `0x${string}`,
+      abi: erc20Abi,
+      functionName: 'balanceOf',
+      args: [target]
+    }).catch(() => 0n),
+    bscPublicClient.readContract({
+      address: CONTRACT_ADDRESSES.NFT as `0x${string}`,
+      abi: nftAbi,
+      functionName: 'balanceOf',
+      args: [target]
+    }).catch(() => 0n),
+    bscPublicClient.getBalance({ address: target }).catch(() => 0n),
+    bscPublicClient.readContract({
+      address: CONTRACT_ADDRESSES.USDT as `0x${string}`,
+      abi: erc20Abi,
+      functionName: 'balanceOf',
+      args: [target]
+    }).catch(() => 0n),
+    bscPublicClient.readContract({
+      address: CONTRACT_ADDRESSES.USDT as `0x${string}`,
+      abi: erc20Abi,
+      functionName: 'allowance',
+      args: [target, CONTRACT_ADDRESSES.PRESALE as `0x${string}`]
+    }).catch(() => 0n)
+  ]);
+
+  return {
+    address: walletAddress,
+    magesBalance: (Number(magesBal / 10n ** 18n)).toLocaleString(),
+    nftBalance: Number(nftBal),
+    bnbBalance: (Number(bnbWei) / 1e18).toFixed(4),
+    usdtBalance: (Number(usdtBal) / 1e18).toFixed(2),
+    usdtAllowance: (Number(usdtAllow) / 1e18).toFixed(2),
+    rawUsdtAllowance: usdtAllow,
+    rawMagesBalance: magesBal
+  };
+}
+
+/**
+ * Executes a contract transaction via the user's connected wallet
+ */
+export async function sendWalletContractTransaction({
+  to,
+  data,
+  value = '0x0'
+}: {
+  to: string;
+  data: string;
+  value?: string;
+}): Promise<string> {
+  const provider = getWalletProvider();
+  if (!provider) {
+    throw new Error('No compatible Web3 wallet detected. Please install MetaMask or Binance Web3 Wallet.');
+  }
+
+  // Ensure on BNB Smart Chain (Chain ID: 56 / 0x38)
+  const currentChain = await provider.request({ method: 'eth_chainId' });
+  if (BigInt(currentChain) !== 56n) {
+    try {
+      await provider.request({
+        method: 'wallet_switchEthereumChain',
+        params: [{ chainId: '0x38' }]
+      });
+    } catch (switchError: any) {
+      if (switchError.code === 4902) {
+        await provider.request({
+          method: 'wallet_addEthereumChain',
+          params: [
+            {
+              chainId: '0x38',
+              chainName: 'BNB Smart Chain Mainnet',
+              nativeCurrency: { name: 'BNB', symbol: 'BNB', decimals: 18 },
+              rpcUrls: ['https://bsc-dataseed.binance.org/'],
+              blockExplorerUrls: ['https://bscscan.com']
+            }
+          ]
+        });
+      } else {
+        throw switchError;
+      }
+    }
+  }
+
+  const accounts = await provider.request({ method: 'eth_requestAccounts' });
+  const from = accounts[0];
+
+  const txHash = await provider.request({
+    method: 'eth_sendTransaction',
+    params: [
+      {
+        from,
+        to,
+        data,
+        value
+      }
+    ]
+  });
+
+  return txHash;
+}
+
